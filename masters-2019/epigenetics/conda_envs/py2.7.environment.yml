@@ -1,0 +1,9 @@
+name: py2.7
+channels:
+  - bioconda
+  - defaults
+dependencies:
+  - python=2.7
+  - macs2=2.1.1.20160309
+  - sicer=1.1
+  - scipy=1.1.0
