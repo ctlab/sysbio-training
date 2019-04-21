@@ -1,12 +1,46 @@
-FROM ubuntu:latest
+FROM ubuntu:16.04
 
 USER root
 
 # Update all the packages
 RUN apt-get update --fix-missing
 
+RUN apt-get -y --no-install-recommends --no-install-suggests install \
+		build-essential \
+		bzip2 \
+		cmake \
+		curl \
+		git \
+		libnss-sss \
+		libtbb2 \
+		libtbb-dev \
+		ncurses-dev \
+		nodejs \
+		python-dev \
+		python-pip \
+		tzdata \
+		unzip \
+		wget \
+		zlib1g \
+		zlib1g-dev \
+		vim \
+        htop && \
+    apt-get clean
+
+# R & Rstudio
+RUN apt-get install -y --no-install-recommends --no-install-suggests \
+        gdebi-core software-properties-common && \
+    apt-get clean
+RUN add-apt-repository -y 'deb http://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/' && \
+    apt-get -y update
+RUN apt-get install -y --allow-unauthenticated r-base r-base-dev && \
+    apt-get clean
+RUN curl --location http://download2.rstudio.org/rstudio-server-1.1.463-amd64.deb --output /tmp/rstudio.deb \
+      && gdebi -n /tmp/rstudio.deb \
+      && rm -rf /tmp/rstudio.deb \
+      && apt-get clean
+
 # Install conda
-RUN apt-get install -y curl bzip2
 RUN curl --location https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh --output ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh
@@ -30,23 +64,10 @@ RUN ln -sf /opt/conda/envs/py2.7/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SI
 RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml
 ENV PATH /opt/conda/envs/bio/bin/:$PATH
 
-# R & Rstudio
-RUN apt-get install -y --no-install-recommends --no-install-suggests \
-        gdebi-core software-properties-common && \
-    apt-get clean
-RUN add-apt-repository -y 'deb http://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/' && \
-    apt-get -y update
-RUN apt-get install -y --allow-unauthenticated r-base r-base-dev && \
-    apt-get clean
-RUN wget http://download2.rstudio.org/rstudio-server-1.1.463-amd64.deb -O /tmp/rstudio.deb \
-      && gdebi -n /tmp/rstudio.deb \
-      && rm -rf /tmp/rstudio.deb \
-      && apt-get clean
-
 # Add user
 RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student \
     && echo student:sysbiopass | chpasswd
-RUN mkdir /opt/conda
+
 RUN chown student:student /opt/conda
 
 USER student
