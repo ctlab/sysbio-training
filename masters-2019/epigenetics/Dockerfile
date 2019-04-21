@@ -70,16 +70,14 @@ RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student \
 
 RUN chown student:student /opt/conda
 
-USER student
-
 # Download Picard tools
-RUN cd ~ && curl --location https://github.com/broadinstitute/picard/releases/download/2.10.7/picard.jar \
-    --output picard.jar
+RUN curl --location https://github.com/broadinstitute/picard/releases/download/2.10.7/picard.jar \
+    --output /opt/picard.jar
 
 # Download SPAN Peak Analyzer, see details: https://research.jetbrains.org/groups/biolabs/tools/span-peak-analyzer
-RUN cd ~ && curl --location https://download.jetbrains.com/biolabs/span/span-0.10.0.4787.jar --output span.jar
+RUN curl --location https://download.jetbrains.com/biolabs/span/span-0.10.0.4787.jar --output /opt/span.jar
 
-# hot fixes end
+# expose default R-Studio port
 EXPOSE 8787
 USER root
 CMD /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --server-app-armor-enabled=0
