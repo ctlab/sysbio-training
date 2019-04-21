@@ -77,6 +77,10 @@ RUN curl --location https://github.com/broadinstitute/picard/releases/download/2
 # Download SPAN Peak Analyzer, see details: https://research.jetbrains.org/groups/biolabs/tools/span-peak-analyzer
 RUN curl --location https://download.jetbrains.com/biolabs/span/span-0.10.0.4787.jar --output /opt/span.jar
 
+RUN curl --location https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/phantompeakqualtools/ccQualityControl.v.1.1.tar.gz \
+    --output /opt/phantompeakqualtools.tar.gz && \
+    tar xvf /opt/phantompeakqualtools.tar.gz
+
 # expose default R-Studio port
 EXPOSE 8787
 USER root

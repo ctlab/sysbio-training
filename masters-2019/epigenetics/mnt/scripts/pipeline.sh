@@ -18,7 +18,7 @@ bash ./bowtie.sh ${GENOME} ${INDEX_FOLDER} 0 ${WORK_DIR}
 
 echo "QC"
 bash ./fastqc.sh ${WORK_DIR}
-bash ./bam_qc.sh ${WORK_DIR}
+bash ./bam_qc.sh /opt/phantompeakqualtools ${WORK_DIR}
 
 echo "Visualization"
 bash ./bigwig.sh ${WORK_DIR}
