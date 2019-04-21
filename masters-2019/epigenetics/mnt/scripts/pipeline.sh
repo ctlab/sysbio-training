@@ -5,7 +5,7 @@ GENOME="hg19"
 INDEX_FOLDER=/mnt/${GENOME}
 
 echo "Get genome information"
-bash ./index_genome.sh ${GENOME} ${INDEX_FOLDER}
+bash ./get_genome.sh ${GENOME} ${INDEX_FOLDER}
 
 echo "Build bowtie indexes"
 bash ./index_bowtie.sh ${GENOME} ${INDEX_FOLDER}
