@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Stop exec on error.
+set -e
+
 >&2 echo "pipeline $@"
 if [[ $# -lt 5 ]]; then
     echo "Need 5 parameters! <WORK_DIR> <INDEX_FOLDER> <GENOME> <SPAN_JAR> <PICARD_TOOLS_JAR>"
