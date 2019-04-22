@@ -37,7 +37,7 @@ echo "Align"
 bash ${SCRIPTS_DIR}/bowtie.sh ${GENOME} ${GENOME_INDEX} 0 ${WORK_DIR}
 
 echo "Processing multiqc"
-multiqc -f -o ${WORK_DIR} ${WORK_DIR}/*.bam
+multiqc -f -o ${WORK_DIR}/bams_qc ${WORK_DIR}/*_bowtie*.log
 
 echo "Visualization"
 bash ${SCRIPTS_DIR}/bigwig.sh ${WORK_DIR}
