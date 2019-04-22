@@ -48,8 +48,6 @@ RUN curl --location http://download2.rstudio.org/rstudio-server-1.1.463-amd64.de
 RUN curl --location https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh --output ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh
-ENV PATH /opt/conda/bin:${PATH}
-ENV LD_LIBRARY_PATH /opt/conda/lib:${LD_LIBRARY_PATH}
 RUN ln -snf /bin/bash /bin/sh
 
 # Conda envs
@@ -62,7 +60,19 @@ RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share
 RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh /usr/local/bin/SICER.sh
 RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh
 RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SICER-rb.sh
-ENV PATH /opt/conda/envs/bio/bin/:$PATH
+ENV PATH /opt/conda/envs/bio/bin/:${PATH}
+ENV LD_LIBRARY_PATH /opt/conda/lib:${LD_LIBRARY_PATH}
+
+# Fix: R shell uses env variables from ~/profile
+RUN \
+	echo 'PATH="/opt/conda/envs/bio/bin:${PATH}"' >> ~/.profile && \
+	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> ~/.profile
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+RUN echo "export LC_ALL=C.UTF-8" >> /etc/profile && \
+    echo "export LANG=C.UTF-8" >> /etc/profile
 
 # Add user
 RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student \
