@@ -8,8 +8,8 @@ which java &>/dev/null || { echo "ERROR: java not found!"; exit 1; }
 source $(dirname $0)/util.sh
 
 >&2 echo "Batch SPAN $@"
-if [[ $# -lt 5 ]]; then
-    echo "Need >= 5 parameters! <SPAN_JAR_PATH> <WORK_DIR> <GENOME> <CHROM_SIZES> <BIN> [<FDR> <GAP>]"
+if [[ $# -lt 4 ]]; then
+    echo "Need at least 4 parameters! <SPAN_JAR_PATH> <WORK_DIR> <GENOME> <CHROM_SIZES> [<BIN>] [<FDR>] [<GAP>]"
     exit 1
 fi
 
@@ -20,7 +20,11 @@ fi
 WORK_DIR=$2
 GENOME=$3
 CHROM_SIZES=$4
+
 BIN=$5
+if [[ -z "$BIN" ]]; then
+    BIN=200
+fi
 FDR=$6
 if [[ -z "$FDR" ]]; then
     FDR=0.05
@@ -42,16 +46,16 @@ do :
     if [[ ! -f ${ID}.peak ]]; then
         if [[ -f "${INPUT}" ]]; then
             echo "${FILE}: control file found: ${INPUT}"
-            java -Xmx8G -jar ${SPAN_JAR_PATH} analyze -t ${FILE} -c ${INPUT} --chrom.sizes ${CHROM_SIZES} \
+            java -jar ${SPAN_JAR_PATH} analyze -t ${FILE} -c ${INPUT} --chrom.sizes ${CHROM_SIZES} \
                 --bin ${BIN} --fdr ${FDR} --gap ${GAP} \
                 --peaks ${ID}.peak \
-                --threads 4 2>&1 | tee ${NAME}_span_${GENOME}.log
+                --threads 6 2>&1 | tee ${NAME}_span_${GENOME}.log
         else
             echo "${FILE}: no control file"
             java -jar ${SPAN_JAR_PATH} analyze -t ${FILE} --chrom.sizes ${CHROM_SIZES} \
                 --bin ${BIN} --fdr ${FDR} --gap ${GAP} \
                 --peaks ${ID}.peak \
-                --threads 4 2>&1 | tee ${NAME}_span_${GENOME}.log
+                --threads 6 2>&1 | tee ${NAME}_span_${GENOME}.log
         fi
     fi
 done
