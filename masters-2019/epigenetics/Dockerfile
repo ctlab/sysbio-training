@@ -48,6 +48,8 @@ RUN curl --location http://download2.rstudio.org/rstudio-server-1.1.463-amd64.de
 RUN curl --location https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh --output ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh
+ENV PATH /opt/conda/bin:${PATH}
+ENV LD_LIBRARY_PATH /opt/conda/lib:${LD_LIBRARY_PATH}
 RUN ln -snf /bin/bash /bin/sh
 
 # Conda envs
@@ -60,18 +62,17 @@ RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share
 RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh /usr/local/bin/SICER.sh
 RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh
 RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SICER-rb.sh
+
 ENV PATH /opt/conda/envs/bio/bin/:${PATH}
-ENV LD_LIBRARY_PATH /opt/conda/lib:${LD_LIBRARY_PATH}
-
-# Fix: R shell uses env variables from ~/profile
-RUN \
-	echo 'PATH="/opt/conda/envs/bio/bin:${PATH}"' >> ~/.profile && \
-	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> ~/.profile
-
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-RUN echo "export LC_ALL=C.UTF-8" >> /etc/profile && \
+# Fix: R shell uses env variables from ~/profile
+RUN \
+	echo 'PATH="/opt/conda/bin:${PATH}"' >> /etc/profile && \
+	echo 'PATH="/opt/conda/envs/bio/bin:${PATH}"' >> /etc/profile && \
+	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> /etc/profile && \
+	echo "export LC_ALL=C.UTF-8" >> /etc/profile && \
     echo "export LANG=C.UTF-8" >> /etc/profile
 
 # Add user
@@ -85,6 +86,22 @@ RUN curl --location https://github.com/broadinstitute/picard/releases/download/2
 
 # Download SPAN Peak Analyzer, see details: https://research.jetbrains.org/groups/biolabs/tools/span-peak-analyzer
 RUN curl --location https://download.jetbrains.com/biolabs/span/span-0.10.0.4787.jar --output /opt/span.jar
+
+USER student
+
+ENV PATH /opt/conda/bin:${PATH}
+ENV PATH /opt/conda/envs/bio/bin/:${PATH}
+ENV LD_LIBRARY_PATH /opt/conda/lib:${LD_LIBRARY_PATH}
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+# Fix: R shell uses env variables from ~/profile
+RUN \
+	echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
+	echo 'PATH="/opt/conda/envs/bio/bin:${PATH}"' >> ~/.profile && \
+	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> ~/.profile && \
+	echo "export LC_ALL=C.UTF-8" >> ~/.profile && \
+    echo "export LANG=C.UTF-8" >> ~/.profile
 
 # expose default R-Studio port
 EXPOSE 8787
