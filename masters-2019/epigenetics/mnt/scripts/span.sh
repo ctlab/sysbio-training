@@ -46,13 +46,13 @@ do :
     if [[ ! -f ${ID}.peak ]]; then
         if [[ -f "${INPUT}" ]]; then
             echo "${FILE}: control file found: ${INPUT}"
-            java -jar ${SPAN_JAR_PATH} analyze -t ${FILE} -c ${INPUT} --chrom.sizes ${CHROM_SIZES} \
+            java -Xmx16G -jar ${SPAN_JAR_PATH} analyze -t ${FILE} -c ${INPUT} --chrom.sizes ${CHROM_SIZES} \
                 --bin ${BIN} --fdr ${FDR} --gap ${GAP} \
                 --peaks ${ID}.peak \
                 --threads 6 2>&1 | tee ${NAME}_span_${GENOME}.log
         else
             echo "${FILE}: no control file"
-            java -jar ${SPAN_JAR_PATH} analyze -t ${FILE} --chrom.sizes ${CHROM_SIZES} \
+            java -Xmx16G -jar ${SPAN_JAR_PATH} analyze -t ${FILE} --chrom.sizes ${CHROM_SIZES} \
                 --bin ${BIN} --fdr ${FDR} --gap ${GAP} \
                 --peaks ${ID}.peak \
                 --threads 6 2>&1 | tee ${NAME}_span_${GENOME}.log
