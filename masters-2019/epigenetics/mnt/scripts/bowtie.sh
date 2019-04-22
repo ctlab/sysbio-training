@@ -6,7 +6,7 @@ which bowtie &>/dev/null || { echo "ERROR: bowtie not found!"; exit 1; }
 which samtools &>/dev/null || { echo "ERROR: samtools not found!"; exit 1; }
 
 # Load utils
-source ./util.sh
+source $(dirname $0)/util.sh
 
 >&2 echo "Batch bowtie $@"
 if [[ $# -lt 4 ]]; then
@@ -18,6 +18,8 @@ GENOME=$1
 INDEXES=$2
 TRIM5=$3
 WORK_DIR=$4
+
+cd ${WORK_DIR}
 
 # Configure TRIM_ARGS to avoid bowtie segfault in 0 case
 if [[ ${TRIM5} -gt 0 ]]; then

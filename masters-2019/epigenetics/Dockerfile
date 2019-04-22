@@ -5,6 +5,7 @@ USER root
 # Update all the packages
 RUN apt-get update --fix-missing
 
+# Essential development tools and headers
 RUN apt-get -y --no-install-recommends --no-install-suggests install \
 		build-essential \
 		bzip2 \
@@ -14,6 +15,7 @@ RUN apt-get -y --no-install-recommends --no-install-suggests install \
 		libnss-sss \
 		libtbb2 \
 		libtbb-dev \
+		mc \
 		ncurses-dev \
 		nodejs \
 		python-dev \
@@ -61,7 +63,7 @@ RUN ln -sf /opt/conda/envs/py2.7/share/sicer-1.1-3/SICER.sh /usr/local/bin/SICER
 RUN ln -sf /opt/conda/envs/py2.7/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SICER-rb.sh
 
 # Bio utils available in path
-RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml
+RUN conda env create -q --name bio python=3.5 --file /root/conda_envs/bio.environment.yml
 ENV PATH /opt/conda/envs/bio/bin/:$PATH
 
 # Add user
@@ -71,15 +73,10 @@ RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student \
 RUN chown student:student /opt/conda
 
 # Download Picard tools
-RUN curl --location https://github.com/broadinstitute/picard/releases/download/2.10.7/picard.jar \
-    --output /opt/picard.jar
+RUN curl --location https://github.com/broadinstitute/picard/releases/download/2.10.7/picard.jar --output /opt/picard.jar
 
 # Download SPAN Peak Analyzer, see details: https://research.jetbrains.org/groups/biolabs/tools/span-peak-analyzer
 RUN curl --location https://download.jetbrains.com/biolabs/span/span-0.10.0.4787.jar --output /opt/span.jar
-
-RUN curl --location https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/phantompeakqualtools/ccQualityControl.v.1.1.tar.gz \
-    --output /opt/phantompeakqualtools.tar.gz && \
-    tar xvf /opt/phantompeakqualtools.tar.gz
 
 # expose default R-Studio port
 EXPOSE 8787

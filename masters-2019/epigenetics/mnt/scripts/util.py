@@ -10,7 +10,6 @@ import subprocess
 import sys
 import traceback
 
-
 __author__ = 'oleg.shpynov@jetbrains.com'
 
 help_message = '''
@@ -114,10 +113,10 @@ def effective_genome_fraction(genome, chrom_sizes_path):
     mm: 1.87e9
     ce: 9e7
     dm: 1.2e8"""
-    chrom_length = int(run([['cat', chrom_sizes_path],
-                            ['grep', '-v', 'chr_'],
-                            ['awk', '{ L+=$2 } END { print L }']
-                            ])[0].decode('utf-8').strip())
+    chrom_length = float(run([['cat', chrom_sizes_path],
+                              ['grep', '-v', 'chr_'],
+                              ['awk', '{ L+=$2 } END { print L }']
+                              ])[0].decode('utf-8').strip())
     if genome.startswith('mm'):
         size = 1.87e9
     elif genome.startswith('hg'):

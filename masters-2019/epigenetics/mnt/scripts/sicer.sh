@@ -16,7 +16,7 @@ which SICER.sh &>/dev/null || {
 which bedtools &>/dev/null || { echo "ERROR: bedtools not found!"; exit 1; }
 
 # Load util
-source ./util.sh
+source $(dirname $0)/util.sh
 
 >&2 echo "Batch sicer $@"
 if [[ $# -lt 4 ]]; then
@@ -38,7 +38,7 @@ if [[ $# -ge 6 ]]; then FRAGMENT_SIZE=$6 ; fi
 GAP_SIZE=600
 if [[ $# -ge 7 ]]; then GAP_SIZE=$7 ; fi
 
-EFFECTIVE_GENOME_FRACTION=$(python ./util.py effective_genome_fraction ${GENOME} ${CHROM_SIZES})
+EFFECTIVE_GENOME_FRACTION=$(python $(dirname $0)/util.py effective_genome_fraction ${GENOME} ${CHROM_SIZES})
 echo "EFFECTIVE_GENOME_FRACTION: ${EFFECTIVE_GENOME_FRACTION}"
 
 if [[ -z "${EFFECTIVE_GENOME_FRACTION}" ]]; then
@@ -59,18 +59,18 @@ do :
     PEAKS_FILE=$(find . -name "${NAME}-W${WINDOW_SIZE}-G${GAP_SIZE}-FDR${FDR}*island*")
     if [[ -z "${PEAKS_FILE}" ]]; then
         FILE_BED=${NAME}.bed # It is used for results naming
-        INPUT=$(python ./util.py find_input ${WORK_DIR}/${FILE})
+        INPUT=$(python $(dirname $0)/util.py find_input ${WORK_DIR}/${FILE})
         echo "${FILE} input: ${INPUT}"
         INPUT_BED=${INPUT/.bam/.bed}
 
         # Create working folder
-        SICER_FOLDER=$(mktemp sicer.XXXXXX)
+        SICER_FOLDER=$(mktemp -d ${WORK_DIR}/sicer.XXXXXX)
         SICER_OUT_FOLDER=${SICER_FOLDER}/out
         mkdir -p ${SICER_OUT_FOLDER}
 
         # SICER works with BED only, reuse _pileup.bed if possible
         PILEUP_BED=$(pileup ${WORK_DIR}/${FILE})
-        ln -s ${PILEUP_BED} ${SICER_FOLDER}/${FILE_BED}
+        ln -sf ${PILEUP_BED} ${SICER_FOLDER}/${FILE_BED}
 
         if [[ -f "${INPUT}" ]]; then
             echo "${FILE}: control file found: ${INPUT}"
@@ -91,7 +91,7 @@ do :
         #   fragment size           = 150
         #   gap size (bp)           = 600
 
-        if [[ -f ${SICER_FOLDER}/${INPUT_BED} ]]; then
+        if [[ -f ${INPUT_BED} ]]; then
             SICER.sh    ${SICER_FOLDER} ${FILE_BED} ${INPUT_BED} ${SICER_OUT_FOLDER} ${GENOME} 1 ${WINDOW_SIZE} \
                 ${FRAGMENT_SIZE} ${EFFECTIVE_GENOME_FRACTION} ${GAP_SIZE} ${FDR} 2>&1 |\
                 tee ${ID}_sicer.log
@@ -101,8 +101,6 @@ do :
                 tee ${ID}_sicer.log
         fi
 
-        # SICER generates lots of output, ignore it: resulting BED only.
-        # See https://github.com/JetBrains-Research/washu/issues/27
         mv ${SICER_OUT_FOLDER}/* ${WORK_DIR}
 
         # Cleanup everything else

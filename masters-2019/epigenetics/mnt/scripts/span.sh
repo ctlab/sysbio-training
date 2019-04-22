@@ -5,7 +5,7 @@
 which java &>/dev/null || { echo "ERROR: java not found!"; exit 1; }
 
 # Load utils
-source ./util.sh
+source $(dirname $0)/util.sh
 
 >&2 echo "Batch SPAN $@"
 if [[ $# -lt 5 ]]; then
@@ -35,9 +35,7 @@ cd ${WORK_DIR}
 TASKS=()
 for FILE in $(find . -name '*.bam' | sed 's#\./##g' | grep -v 'input')
 do :
-    INPUT=$(python ./util.py find_input ${WORK_DIR}/${FILE})
-    echo "${FILE}: control file: ${INPUT}"
-
+    INPUT=$(python $(dirname $0)/util.py find_input ${WORK_DIR}/${FILE})
     NAME=${FILE%%.bam} # file name without extension
     ID=${NAME}_${FDR}_${GAP}
 
@@ -47,13 +45,13 @@ do :
             java -Xmx8G -jar ${SPAN_JAR_PATH} analyze -t ${FILE} -c ${INPUT} --chrom.sizes ${CHROM_SIZES} \
                 --bin ${BIN} --fdr ${FDR} --gap ${GAP} \
                 --peaks ${ID}.peak \
-                --threads 4 2>&1 |\ tee ${NAME}_span_${GENOME}.log
+                --threads 4 2>&1 | tee ${NAME}_span_${GENOME}.log
         else
             echo "${FILE}: no control file"
             java -jar ${SPAN_JAR_PATH} analyze -t ${FILE} --chrom.sizes ${CHROM_SIZES} \
                 --bin ${BIN} --fdr ${FDR} --gap ${GAP} \
                 --peaks ${ID}.peak \
-                --threads 4 2>&1 |\ tee ${NAME}_span_${GENOME}.log
+                --threads 4 2>&1 | tee ${NAME}_span_${GENOME}.log
         fi
     fi
 done

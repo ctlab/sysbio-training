@@ -6,7 +6,7 @@ which macs2 &>/dev/null || { echo "ERROR: MACS2 not found! Download MACS2: <http
 which Rscript &>/dev/null || { echo "ERROR: R not found!"; exit 1; }
 
 # Load utils
-source ./util.sh
+source $(dirname $0)/util.sh
 
 >&2 echo "Batch macs2 $@"
 if [[ $# -lt 4 ]]; then
@@ -19,13 +19,13 @@ GENOME=$2
 SUFFIX=$3
 PARAMS=$4
 
-SPECIES=$(python ./util.py macs_species ${GENOME})
+SPECIES=$(python $(dirname $0)/util.py macs_species ${GENOME})
 
 cd ${WORK_DIR}
 
 for FILE in $(find . -name '*.bam' | sed 's#\./##g' | grep -v 'input')
 do :
-    INPUT=$(python ./util.py find_input ${WORK_DIR}/${FILE})
+    INPUT=$(python $(dirname $0)/util.py find_input ${WORK_DIR}/${FILE})
     echo "${FILE}: control file: ${INPUT}"
 
     NAME=${FILE%%.bam} # file name without extension
@@ -33,7 +33,7 @@ do :
 
     PEAKS_FILE=$(find . -name "${ID}*.*Peak")
     if [[ -z ${PEAKS_FILE} ]]; then
-        export TMP_DIR=$(mkdir macs2.XXXXXXXX)
+        TMP_DIR=$(mktemp -d ${WORK_DIR}/macs2.XXXXXXXX)
         mkdir -p ${TMP_DIR}
 
         echo "Macs2 TMP_DIR: ${TMP_DIR}"
@@ -46,14 +46,12 @@ do :
             macs2 callpeak --tempdir ${TMP_DIR} -t ${FILE} -f BAM -g ${SPECIES} -n ${ID} ${PARAMS} 2>&1 |\
                 tee ${ID}_macs2.log
         fi
+        # Cleanup
         rm -rf ${TMP_DIR}
      fi
 done
 
 check_logs
-
-# Cleanup BedGraph files
-rm *.bdg
 
 # Create pdf reports
 MODELS=$(ls *.r); for M in ${MODELS[@]}; do Rscript $M; done

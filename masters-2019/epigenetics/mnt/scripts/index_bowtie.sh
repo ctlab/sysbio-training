@@ -5,7 +5,7 @@
 which bowtie &>/dev/null || { echo "ERROR: bowtie not found!"; exit 1; }
 
 # Load utils
-source ./util.sh
+source $(dirname $0)/util.sh
 
 >&2 echo "index-bowtie $@"
 if [[ $# -lt 2 ]]; then

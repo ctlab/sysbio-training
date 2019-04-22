@@ -1,36 +1,52 @@
 #!/usr/bin/env bash
 
-WORK_DIR=$(pwd)
-GENOME="hg19"
-INDEX_FOLDER=/mnt/${GENOME}
+>&2 echo "pipeline $@"
+if [[ $# -lt 5 ]]; then
+    echo "Need 5 parameters! <WORK_DIR> <INDEX_FOLDER> <GENOME> <SPAN_JAR> <PICARD_TOOLS_JAR>"
+    exit 1
+fi
 
-echo "Get genome information"
-bash ./get_genome.sh ${GENOME} ${INDEX_FOLDER}
+SCRIPTS_DIR=$(dirname $0)
 
-echo "Build bowtie indexes"
-bash ./index_bowtie.sh ${GENOME} ${INDEX_FOLDER}
+WORK_DIR=$1
+INDEX_FOLDER=$2
+GENOME=$3
+SPAN_JAR=$4
+PICARD_TOOLS_JAR=$5
+
+GENOME_INDEX=${INDEX_FOLDER}/${GENOME}
+if [[ ! -d ${GENOME_INDEX} ]]; then
+    mkdir -p ${GENOME_INDEX}
+fi
+
+#echo "Get genome information"
+#bash ${SCRIPTS_DIR}/get_genome.sh ${GENOME} ${GENOME_INDEX}
+#echo "Build bowtie indexes"
+#bash ${SCRIPTS_DIR}/index_bowtie.sh ${GENOME} ${GENOME_INDEX}
 
 echo "QC for reads file"
-bash ./fastqc.sh ${WORK_DIR}
+bash ${SCRIPTS_DIR}/fastqc.sh ${WORK_DIR}
+
+echo "Processing multiqc"
+multiqc -f -o ${WORK_DIR}/fastqc ${WORK_DIR}/fastqc
 
 echo "Align"
-bash ./bowtie.sh ${GENOME} ${INDEX_FOLDER} 0 ${WORK_DIR}
+bash ${SCRIPTS_DIR}/bowtie.sh ${GENOME} ${GENOME_INDEX} 0 ${WORK_DIR}
 
-echo "QC"
-bash ./fastqc.sh ${WORK_DIR}
-bash ./bam_qc.sh /opt/phantompeakqualtools ${WORK_DIR}
+echo "Processing multiqc"
+multiqc -f -o ${WORK_DIR} ${WORK_DIR}/*.bam
 
 echo "Visualization"
-bash ./bigwig.sh ${WORK_DIR}
-
-echo "Remove duplicates"
-bash ./remove_duplicates.sh /opt/picard.jar ${WORK_DIR}
+bash ${SCRIPTS_DIR}/bigwig.sh ${WORK_DIR}
 
 echo "Peak calling"
-bash ./macs2.sh ${WORK_DIR} ${GENOME} "q0.05" "-q 0.05"
-bash ./macs2.sh ${WORK_DIR} ${GENOME} "broad_0.1" "--broad --broad-cutoff 0.1"
-bash ./sicer.sh ${WORK_DIR} ${GENOME} ${INDEX_FOLDER}/${GENOME}.chrom.sizes 0.05
-bash ./span.sh /opt/span.jar ${WORK_DIR} ${GENOME} ${INDEX_FOLDER}/${GENOME}.chrom.sizes 200 0.05 5
+bash ${SCRIPTS_DIR}/macs2.sh ${WORK_DIR} ${GENOME} "q0.05" "-q 0.05"
+bash ${SCRIPTS_DIR}/macs2.sh ${WORK_DIR} ${GENOME} "broad_0.1" "--broad --broad-cutoff 0.1"
+bash ${SCRIPTS_DIR}/sicer.sh ${WORK_DIR} ${GENOME} ${GENOME_INDEX}/${GENOME}.chrom.sizes 0.05
+bash ${SCRIPTS_DIR}/span.sh ${SPAN_JAR} ${WORK_DIR} ${GENOME} ${GENOME_INDEX}/${GENOME}.chrom.sizes 200 0.05 5
+
+echo "Removing duplicates"
+bash ${SCRIPTS_DIR}/remove_duplicates.sh ${PICARD_TOOLS_JAR} ${WORK_DIR}
 
 echo "DONE"
 

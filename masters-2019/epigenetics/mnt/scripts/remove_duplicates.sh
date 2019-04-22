@@ -5,7 +5,7 @@
 which java &>/dev/null || { echo "ERROR: java not found!"; exit 1; }
 
 # Load utils
-source ./util.sh
+source $(dirname $0)/util.sh
 
 >&2 echo "Batch remove_duplicates $@"
 if [[ $# -lt 1 ]]; then

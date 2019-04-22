@@ -6,7 +6,7 @@
 which fastqc &>/dev/null || { echo "ERROR: fastqc not found!"; exit 1; }
 
 # Load utils
-source ./util.sh
+source $(dirname $0)/util.sh
 
 >&2 echo "Batch fastqc $@"
 if [[ $# -lt 1 ]]; then
@@ -14,6 +14,7 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 WORK_DIR=$1
+cd ${WORK_DIR}
 
 RESULTS_DIR="fastqc"
 if [[ -d "${RESULTS_DIR}" ]]; then
@@ -32,8 +33,5 @@ do :
 done
 
 check_logs
-
-echo "Processing multiqc"
-multiqc -f -o "${WORK_DIR}" "${WORK_DIR}/fastqc"
 
 >&2 echo "Done. Batch fastqc $@"
