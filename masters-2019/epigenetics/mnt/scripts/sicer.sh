@@ -94,11 +94,11 @@ do :
         if [[ -f ${INPUT_BED} ]]; then
             SICER.sh    ${SICER_FOLDER} ${FILE_BED} ${INPUT_BED} ${SICER_OUT_FOLDER} ${GENOME} 1 ${WINDOW_SIZE} \
                 ${FRAGMENT_SIZE} ${EFFECTIVE_GENOME_FRACTION} ${GAP_SIZE} ${FDR} 2>&1 |\
-                tee ${ID}_sicer.log
+                tee ${WORK_DIR}/${ID}_sicer.log
         else
             SICER-rb.sh ${SICER_FOLDER} ${FILE_BED}              ${SICER_OUT_FOLDER} ${GENOME} 1 ${WINDOW_SIZE} \
                 ${FRAGMENT_SIZE} ${EFFECTIVE_GENOME_FRACTION} ${GAP_SIZE} ${FDR} 2>&1 |\
-                tee ${ID}_sicer.log
+                tee ${WORK_DIR}/${ID}_sicer.log
         fi
 
         mv ${SICER_OUT_FOLDER}/* ${WORK_DIR}
