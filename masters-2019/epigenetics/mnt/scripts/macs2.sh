@@ -33,7 +33,8 @@ do :
 
     PEAKS_FILE=$(find . -name "${ID}*.*Peak")
     if [[ -z ${PEAKS_FILE} ]]; then
-        export TMP_DIR=$(type job_tmp_dir &>/dev/null && echo "\$(tmp_dir)" || echo "/tmp")
+        export TMP_DIR=$(mkdir macs2.XXXXXXXX)
+        mkdir -p ${TMP_DIR}
 
         echo "Macs2 TMP_DIR: ${TMP_DIR}"
         if [[ -f "${INPUT}" ]]; then
@@ -45,6 +46,7 @@ do :
             macs2 callpeak --tempdir ${TMP_DIR} -t ${FILE} -f BAM -g ${SPECIES} -n ${ID} ${PARAMS} 2>&1 |\
                 tee ${ID}_macs2.log
         fi
+        rm -rf ${TMP_DIR}
      fi
 done
 

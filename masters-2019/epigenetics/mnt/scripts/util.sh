@@ -34,8 +34,6 @@ function pileup(){
     NAME=$(basename ${BAM/.bam/_pileup.bed})
     RESULT=${PILEUP_DIR}/${NAME}
     if [[ ! -f ${RESULT} ]]; then
-        export TMP_DIR=$(type job_tmp_dir &>/dev/null && echo "$(tmp_dir)" || echo "/tmp")
-        mkdir -p "${TMP_DIR}"
         PILEUP_TMP=$(mktemp pileup.XXXXXX.bed)
         >&2 echo "Calculate ${BAM} pileup file in tmp file: ${PILEUP_TMP}"
         bedtools bamtobed -i ${BAM} > ${PILEUP_TMP}
