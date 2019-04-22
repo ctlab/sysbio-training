@@ -19,23 +19,6 @@ check_logs()
     fi
 }
 
-tmp_dir() {
-    if [[ -z "${NAME}" ]]; then
-      TMP_DIR=~/tmp/job$$/;
-    else
-      TMP_DIR="/tmp/$NAME/";
-    fi
-    mkdir -p "${TMP_DIR}"
-
-    echo "${TMP_DIR}"
-}
-
-clean_tmp_dir() {
-    if [[ -z "${NAME}" ]]; then
-      rm -rf "$(tmp_dir)"
-    fi
-}
-
 # Computes and returns pileup file for given BAM file
 function pileup(){
     if [[ ! $# -eq 1 ]]; then

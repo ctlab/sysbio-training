@@ -23,9 +23,6 @@ WORK_DIRS=$2
 for FILE in $(find . -name '*.bam' | sed 's#\./##g')
 do :
     NAME=${FILE%%.bam} # file name without extension
-
-    export TMP_DIR=$(type job_tmp_dir &>/dev/null && echo "\$(tmp_dir)" || echo "/tmp")
-
     #col.	abbreviation	description
     #1	Filename	tagAlign/BAM filename
     #2	numReads	effective sequencing depth i.e. total number of mapped reads in input file

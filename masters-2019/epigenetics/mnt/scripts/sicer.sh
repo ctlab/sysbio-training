@@ -64,7 +64,7 @@ do :
         INPUT_BED=${INPUT/.bam/.bed}
 
         # Create working folder
-        SICER_FOLDER=$(type job_tmp_dir &>/dev/null && echo "\$(tmp_dir)" || echo "/tmp")
+        SICER_FOLDER=$(mktemp sicer.XXXXXX)
         SICER_OUT_FOLDER=${SICER_FOLDER}/out
         mkdir -p ${SICER_OUT_FOLDER}
 
@@ -112,5 +112,4 @@ done
 
 check_logs
 
-type clean_job_tmp_dir &>/dev/null && clean_tmp_dir
 >&2 echo "Done. Batch sicer $@"
