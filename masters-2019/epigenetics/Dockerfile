@@ -12,10 +12,12 @@ RUN apt-get -y --no-install-recommends --no-install-suggests install \
 		cmake \
 		curl \
 		git \
+		less \
 		libnss-sss \
 		libtbb2 \
 		libtbb-dev \
 		mc \
+		nano \
 		ncurses-dev \
 		nodejs \
 		python-dev \
