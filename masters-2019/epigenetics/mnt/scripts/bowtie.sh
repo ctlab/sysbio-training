@@ -89,10 +89,10 @@ do :
     # --strata           hits in sub-optimal strata aren't reported (requires --best)
     if [[ -f "${FILE_PAIRED}" ]]; then
         bowtie -p 4 -St -m 1 -v 3 ${TRIM_ARGS} --best --strata ${INDEX_ARG} ${GENOME} \
-            -1 ${FILE} -2 ${FILE_PAIRED} ${ID}.sam 2&>1 |\
+            -1 ${FILE} -2 ${FILE_PAIRED} ${ID}.sam 2>&1 |\
             tee ${NAME}_bowtie_${GENOME}.log
     else
-        bowtie -p 4 -St -m 1 -v 3 ${TRIM_ARGS} --best --strata ${INDEX_ARG} ${GENOME} ${FILE} ${ID}.sam 2&>1 |\
+        bowtie -p 4 -St -m 1 -v 3 ${TRIM_ARGS} --best --strata ${INDEX_ARG} ${GENOME} ${FILE} ${ID}.sam 2>&1 |\
             tee ${NAME}_bowtie_${GENOME}.log
     fi
     samtools view -bS ${ID}.sam -o ${ID}_not_sorted.bam

@@ -30,7 +30,7 @@ do :
 
     if [[ ! -f ${UNIQUE_BAM} ]]; then
         java -Xmx4G -jar ${PICARD_TOOLS_JAR} \
-            MarkDuplicates REMOVE_DUPLICATES=true INPUT=${FILE} OUTPUT=${UNIQUE_BAM} M=${METRICS} 2&>1 |\
+            MarkDuplicates REMOVE_DUPLICATES=true INPUT=${FILE} OUTPUT=${UNIQUE_BAM} M=${METRICS} 2>&1 |\
             tee ${NAME}_unique.log
     fi
 done

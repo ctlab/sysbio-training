@@ -35,7 +35,7 @@ do :
     #9	NSC	Normalized strand cross-correlation coefficient (NSC) = COL4 / COL8
     #10	RSC	Relative strand cross-correlation coefficient (RSC) = (COL4 - COL8) / (COL6 - COL8)
     #11	QualityTag	Quality tag based on thresholded RSC (codes= -2:veryLow, -1:Low, 0:Medium, 1:High, 2:veryHigh)
-    Rscript ${PHANTOMPEAKQUALTOOLS}/run_spp.R -c=${FILE} -savp -out=${NAME}.phantom.tsv 2&>1 | tee ${NAME}_bam_qc.log
+    Rscript ${PHANTOMPEAKQUALTOOLS}/run_spp.R -c=${FILE} -savp -out=${NAME}.phantom.tsv 2>&1 | tee ${NAME}_bam_qc.log
 done
 
 check_logs
