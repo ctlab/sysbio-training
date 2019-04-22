@@ -56,16 +56,12 @@ RUN ln -snf /bin/bash /bin/sh
 RUN mkdir -p /root/conda_envs
 COPY conda_envs /root/conda_envs
 
-# Python 2.7 with MACS2, SICER
-RUN conda env create -q --name py2.7 --file /root/conda_envs/py2.7.environment.yml
-RUN ln -sf /opt/conda/envs/py2.7/bin/macs2 /usr/local/bin/macs2
-# SICER is python2 library, force it!
-RUN sed -i 's#python#/opt/conda/envs/py2.7/bin/python#g' /opt/conda/envs/py2.7/share/sicer-1.1-3/SICER.sh
-RUN ln -sf /opt/conda/envs/py2.7/share/sicer-1.1-3/SICER.sh /usr/local/bin/SICER.sh
-RUN ln -sf /opt/conda/envs/py2.7/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SICER-rb.sh
-
-# Bio utils available in path
-RUN conda env create -q --name bio python=3.5 --file /root/conda_envs/bio.environment.yml
+# Bio utils, Python 2.7 with MACS2, SICER
+RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml
+RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh
+RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh /usr/local/bin/SICER.sh
+RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh
+RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SICER-rb.sh
 ENV PATH /opt/conda/envs/bio/bin/:$PATH
 
 # Add user

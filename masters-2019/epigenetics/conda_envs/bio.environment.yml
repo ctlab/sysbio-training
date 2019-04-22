@@ -3,6 +3,10 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  - python=2.7
+  - macs2=2.1.1.20160309
+  - sicer=1.1
+  - scipy=1.1.0
   - sra-tools=2.8.2
   - fastqc=0.11.5
   - java-jdk=8.0.92
