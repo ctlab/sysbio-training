@@ -9,7 +9,19 @@ Build
 docker build -t sbepi .
 ```
 
-Launch for students
+
+Launch single instance
+-----------------------
+```bash
+DATA_FOLDER=/mnt
+STUDENT_FOLDER=/tmp/student1
+docker run -t sbepi --name sbepi1 -m 8g --cpus=2 -d -p 871:8787 \
+    -v ${DATA_FOLDER}:/mnt:ro \
+    -v ${STUDENT_FOLDER}:/home/student     
+```
+
+
+Batch launch for students
 -------------------
 
 ```bash
