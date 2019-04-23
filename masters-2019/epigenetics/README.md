@@ -23,16 +23,17 @@ docker run --name sbepi1 -m 32g --cpus=6 -d -p 871:8787 \
 
 Open localhost:871 and use credential student:sysbiopass to login. 
 
-Batch launch for students
--------------------
+Batch launch for students at IFMO infrastucture
+-----------------------------------------------
+Important: student home folders are split across different HD volumnes `/mnt/vol1` - `/mnt/vol4`.
 
 ```bash
 STUDENTS=16
-DATA_FOLDER=/mnt
-STUDENT_FOLDER_PREFIX=/mnt/vol
-for t in $(seq -w 1 ${STUDENTS}); do  
-    docker run --name sbepi$t -m 32g --cpus=6 -d -p 87$t:8787 \
-    -v ${DATA_FOLDER}:/mnt:ro -v ${STUDENT_FOLDER_PREFIX}"$(((t-1)/4+1))"/student$t:/home/student \
-    -t sbepi
+for t in `seq -w 1 $STUDENTS`; do 
+    t10=$(echo $t | sed 's/^0//g'); 
+    docker run --name sb$t -m 32g --cpus=6 -d -p 87$t:8787 \
+        -v /scratch/oshpynov/mnt:/mnt:ro \ 
+        -v /mnt/vol"$(((t10-1)/4+1))"/student$t:/home/student \
+        -t sbepi; 
 done
 ```
