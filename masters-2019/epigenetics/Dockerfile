@@ -81,12 +81,6 @@ RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student \
 
 RUN chown student:student /opt/conda
 
-# Download Picard tools
-RUN curl --location https://github.com/broadinstitute/picard/releases/download/2.10.7/picard.jar --output /opt/picard.jar
-
-# Download SPAN Peak Analyzer, see details: https://research.jetbrains.org/groups/biolabs/tools/span-peak-analyzer
-RUN curl --location https://download.jetbrains.com/biolabs/span/span-0.10.0.4787.jar --output /opt/span.jar
-
 USER student
 
 ENV PATH /opt/conda/bin:${PATH}
