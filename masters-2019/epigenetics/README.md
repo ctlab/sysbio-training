@@ -1,17 +1,22 @@
-Docker Image for Epigenetics part
-=================================
+Epigenetics practice
+====================
 
-This is just an image `ubuntu:latest` - Ubuntu LTS with all the environment setup.
+The materials from the Epigenetics module on April 23--25, 2019. 
 
-Build
------
+By Oleg Shpynov(oleg.shpynov@jetbrains.com) and Roman Chernyatchik(roman.chernyatchik@jetbrains.com).
+
+
+
+Build Docker Image
+------------------
+
 ```bash
 docker build -t sbepi .
 ```
 
 
 Launch single instance
------------------------
+----------------------
 ```bash
 DATA_FOLDER=/mnt
 STUDENT_FOLDER=/tmp/student1
