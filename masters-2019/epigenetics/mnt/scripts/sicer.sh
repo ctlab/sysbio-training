@@ -56,7 +56,7 @@ do :
 
     # Check if file already processed
     # Naming example: OD_OD10_H3K27me3-W200-G0-FDR0.01-island.bed
-    PEAKS_FILE=$(find . -name "${NAME}-W${WINDOW_SIZE}-G${GAP_SIZE}-FDR${FDR}*island*")
+    PEAKS_FILE=$(find . -name "${NAME}-W${WINDOW_SIZE}-G${GAP_SIZE}-FDR${FDR}")
     if [[ -z "${PEAKS_FILE}" ]]; then
         FILE_BED=${NAME}.bed # It is used for results naming
         INPUT=$(python $(dirname $0)/util.py find_input ${WORK_DIR}/${FILE})
@@ -102,6 +102,9 @@ do :
         fi
 
         mv ${SICER_OUT_FOLDER}/* ${WORK_DIR}
+
+        # Move back out of folder to be removed
+        cd ${WORK_DIR}
 
         # Cleanup everything else
         rm -r ${SICER_FOLDER}
