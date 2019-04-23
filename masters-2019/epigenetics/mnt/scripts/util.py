@@ -105,7 +105,7 @@ def macs_species(genome):
     raise Exception('Unknown species {}'.format(genome))
 
 
-def effective_genome_fraction(genome, chrom_sizes_path):
+def effective_genome_fraction(genome, chrom_sizes_path, pileup_bed):
     """From MACS2 documentation:
     The default hs 2.7e9 is recommended for UCSC human hg18 assembly.
     Here are all precompiled parameters for effective genome size:
@@ -113,17 +113,26 @@ def effective_genome_fraction(genome, chrom_sizes_path):
     mm: 1.87e9
     ce: 9e7
     dm: 1.2e8"""
-    chrom_length = float(run([['cat', chrom_sizes_path],
-                              ['grep', '-v', 'chr_'],
-                              ['awk', '{ L+=$2 } END { print L }']
-                              ])[0].decode('utf-8').strip())
+    chromosomes = re.split('\n',
+                           run([['cat', pileup_bed],
+                                ['awk', '{print $1}'],
+                                ['sort', '--unique']])[0].decode('utf-8').strip())
+    chrom_sizes = {}
+    with open(chrom_sizes_path, 'r') as f:
+        for line in f.readlines():
+            chromosome, size = re.split('\t', line.strip())
+            chrom_sizes[chromosome] = int(size)
+
+    chromosomes_length = sum([chrom_sizes[c] if c in chrom_sizes else 0 for c in chromosomes])
+    genome_length = sum(chrom_sizes.values())
+
     if genome.startswith('mm'):
         size = 1.87e9
     elif genome.startswith('hg'):
         size = 2.7e9
     else:
         raise Exception('Unknown species {}'.format(genome))
-    return size / chrom_length
+    return (size / genome_length) * (1.0 * chromosomes_length / genome_length)
 
 
 def run(commands, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
@@ -189,8 +198,8 @@ def main():
     if len(args) == 2 and args[0] == 'macs_species':
         print(macs_species(args[1]))
 
-    if len(args) == 3 and args[0] == 'effective_genome_fraction':
-        print(effective_genome_fraction(args[1], args[2]))
+    if len(args) == 4 and args[0] == 'effective_genome_fraction':
+        print(effective_genome_fraction(args[1], args[2], args[3]))
 
 
 if __name__ == "__main__":

@@ -38,14 +38,6 @@ if [[ $# -ge 6 ]]; then FRAGMENT_SIZE=$6 ; fi
 GAP_SIZE=600
 if [[ $# -ge 7 ]]; then GAP_SIZE=$7 ; fi
 
-EFFECTIVE_GENOME_FRACTION=$(python $(dirname $0)/util.py effective_genome_fraction ${GENOME} ${CHROM_SIZES})
-echo "EFFECTIVE_GENOME_FRACTION: ${EFFECTIVE_GENOME_FRACTION}"
-
-if [[ -z "${EFFECTIVE_GENOME_FRACTION}" ]]; then
-    echo "EFFECTIVE_GENOME_FRACTION is not determined"
-    exit 1
-fi
-
 cd ${WORK_DIR}
 
 TASKS=()
@@ -76,6 +68,15 @@ do :
             echo "${FILE}: control file found: ${INPUT}"
             INPUT_PILEUP_BED=$(pileup ${WORK_DIR}/${INPUT})
             ln -sf ${INPUT_PILEUP_BED} ${SICER_FOLDER}/${INPUT_BED}
+        fi
+
+        EFFECTIVE_GENOME_FRACTION=$(python $(dirname $0)/util.py \
+            effective_genome_fraction ${GENOME} ${CHROM_SIZES} ${SICER_FOLDER}/${INPUT_BED})
+        >&2 echo "EFFECTIVE_GENOME_FRACTION: ${EFFECTIVE_GENOME_FRACTION}"
+
+        if [[ -z "${EFFECTIVE_GENOME_FRACTION}" ]]; then
+            echo "EFFECTIVE_GENOME_FRACTION is not determined"
+            exit 1
         fi
 
         cd ${SICER_FOLDER}
