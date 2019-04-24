@@ -13,73 +13,86 @@ RUN apt-get -y --no-install-recommends --no-install-suggests install \
 		curl \
 		git \
 		less \
+		libcurl4-openssl-dev \
 		libnss-sss \
+		libssl-dev \
 		libtbb2 \
 		libtbb-dev \
+		libxml2-dev \
 		mc \
 		nano \
 		ncurses-dev \
 		nodejs \
 		python-dev \
-		python-pip \
+		tree \
 		tzdata \
 		unzip \
+		util-linux \
+		tree \
+		vim \
 		wget \
 		zlib1g \
 		zlib1g-dev \
-		vim \
         htop && \
+    apt-get autoremove -y && \
     apt-get clean
 
-# R & Rstudio
+# R 3.5 & Rstudio
 RUN apt-get install -y --no-install-recommends --no-install-suggests \
-        gdebi-core software-properties-common && \
+    gdebi-core software-properties-common && \
+    add-apt-repository -y 'deb http://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/' && \
+    apt-get -y update && \
+    apt-get install -y --allow-unauthenticated r-base r-base-dev && \
+    curl --location http://download2.rstudio.org/rstudio-server-1.1.463-amd64.deb --output /tmp/rstudio.deb && \
+    gdebi -n /tmp/rstudio.deb && \
+    rm -rf /tmp/rstudio.deb && \
+    apt-get autoremove -y && \
     apt-get clean
-RUN add-apt-repository -y 'deb http://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/' && \
-    apt-get -y update
-RUN apt-get install -y --allow-unauthenticated r-base r-base-dev && \
-    apt-get clean
-RUN curl --location http://download2.rstudio.org/rstudio-server-1.1.463-amd64.deb --output /tmp/rstudio.deb \
-      && gdebi -n /tmp/rstudio.deb \
-      && rm -rf /tmp/rstudio.deb \
-      && apt-get clean
+
+# R packages
+RUN R -e 'source("https://bioconductor.org/biocLite.R")' && \
+    R -e 'BiocInstaller::biocLite(c("ChIPseeker"))'
 
 # Install conda
 RUN curl --location https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh --output ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh
+
 ENV PATH /opt/conda/bin:${PATH}
 ENV LD_LIBRARY_PATH /opt/conda/lib:${LD_LIBRARY_PATH}
-RUN ln -snf /bin/bash /bin/sh
 
 # Conda envs
 RUN mkdir -p /root/conda_envs
 COPY conda_envs /root/conda_envs
 
-# Bio utils, Python 2.7 with MACS2, SICER
-RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml
-RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh
-RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh /usr/local/bin/SICER.sh
-RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh
-RUN ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SICER-rb.sh
+# Bio utils, Python 2.7 with MACS2, SICER and snakemake
+RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml && \
+    conda env create -q --name snakemake --file /root/conda_envs/snakemake.environment.yml && \
+    conda clean -i -l -t -y && \
+    rm -rf /usr/local/src/*
 
+# Fix SICER paths
+RUN sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh && \
+    ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER.sh /usr/local/bin/SICER.sh && \
+    sed -i 's#python#/opt/conda/envs/bio/bin/python#g' /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh && \
+    ln -sf /opt/conda/envs/bio/share/sicer-1.1-3/SICER-rb.sh /usr/local/bin/SICER-rb.sh
+
+# Add bio to path
 ENV PATH /opt/conda/envs/bio/bin/:${PATH}
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 # Fix: R shell uses env variables from ~/profile
-RUN \
-	echo 'PATH="/opt/conda/bin:${PATH}"' >> /etc/profile && \
+RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> /etc/profile && \
 	echo 'PATH="/opt/conda/envs/bio/bin:${PATH}"' >> /etc/profile && \
 	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> /etc/profile && \
 	echo "export LC_ALL=C.UTF-8" >> /etc/profile && \
     echo "export LANG=C.UTF-8" >> /etc/profile
 
-# Add user
-RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student \
-    && echo student:sysbiopass | chpasswd
-
-RUN chown student:student /opt/conda
+# Add user and configure /opt/conda
+RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student && \
+    echo student:sysbiopass | chpasswd && \
+    chown student:student /opt/conda
 
 USER student
 
@@ -90,12 +103,12 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 # Fix: R shell uses env variables from ~/profile
-RUN \
-	echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
+RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
 	echo 'PATH="/opt/conda/envs/bio/bin:${PATH}"' >> ~/.profile && \
 	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> ~/.profile && \
 	echo "export LC_ALL=C.UTF-8" >> ~/.profile && \
-    echo "export LANG=C.UTF-8" >> ~/.profile
+    echo "export LANG=C.UTF-8" >> ~/.profile && \
+    echo "export PS1='{\[\e[32m\]\u\[\e[m\]@\[\e[36m\]\h\[\e[m\]:\W_\$?}$ '" >> ~/.rstudio-bashrc
 
 # expose default R-Studio port
 EXPOSE 8787
