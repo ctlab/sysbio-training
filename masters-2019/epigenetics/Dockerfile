@@ -45,9 +45,10 @@ RUN apt-get install -y --no-install-recommends --no-install-suggests \
     apt-get autoremove -y && \
     apt-get clean
 
-# R package
-RUN R -e 'source("https://bioconductor.org/biocLite.R")' && \
-    R -e 'BiocInstaller::biocLite(c("ChIPseeker"))'
+# R packages
+ENV CRAN_URL https://cloud.r-project.org/
+RUN R -e 'install.packages("BiocManager")' && \
+    R -e 'BiocManager::install("ChIPseeker", version = "3.8")'
 
 # Install conda
 RUN curl --location https://repo.continuum.io/miniconda/Miniconda2-4.6.14-Linux-x86_64.sh --output ~/miniconda.sh && \
