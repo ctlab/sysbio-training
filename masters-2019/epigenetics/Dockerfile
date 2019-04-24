@@ -28,6 +28,7 @@ RUN apt-get -y --no-install-recommends --no-install-suggests install \
 		tzdata \
 		unzip \
 		util-linux \
+		bsdmainutils \
 		tree \
 		vim \
 		wget \
@@ -54,7 +55,7 @@ RUN R -e 'source("https://bioconductor.org/biocLite.R")' && \
     R -e 'BiocInstaller::biocLite(c("ChIPseeker"))'
 
 # Install conda
-RUN curl --location https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh --output ~/miniconda.sh && \
+RUN curl --location https://repo.continuum.io/miniconda/Miniconda2-4.6.14-MacOSX-x86_64.sh --output ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh
 
@@ -107,8 +108,7 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
 	echo 'PATH="/opt/conda/envs/bio/bin:${PATH}"' >> ~/.profile && \
 	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> ~/.profile && \
 	echo "export LC_ALL=C.UTF-8" >> ~/.profile && \
-    echo "export LANG=C.UTF-8" >> ~/.profile && \
-    echo "export PS1='{\[\e[32m\]\u\[\e[m\]@\[\e[36m\]\h\[\e[m\]:\W_\$?}$ '" >> ~/.rstudio-bashrc
+    echo "export LANG=C.UTF-8" >> ~/.profile
 
 # expose default R-Studio port
 EXPOSE 8787
