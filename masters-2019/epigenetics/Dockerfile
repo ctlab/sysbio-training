@@ -16,14 +16,8 @@ RUN apt-get -y --no-install-recommends --no-install-suggests install \
 		libcurl4-openssl-dev \
 		libnss-sss \
 		libssl-dev \
-		libtbb2 \
-		libtbb-dev \
 		libxml2-dev \
 		mc \
-		nano \
-		ncurses-dev \
-		nodejs \
-		python-dev \
 		tree \
 		tzdata \
 		unzip \
@@ -39,8 +33,24 @@ RUN apt-get -y --no-install-recommends --no-install-suggests install \
     apt-get autoremove -y && \
     apt-get clean
 
+# R 3.5 & Rstudio
+RUN apt-get install -y --no-install-recommends --no-install-suggests \
+    gdebi-core software-properties-common && \
+    add-apt-repository -y 'deb http://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/' && \
+    apt-get -y update && \
+    apt-get install -y --allow-unauthenticated r-base r-base-dev && \
+    curl --location http://download2.rstudio.org/rstudio-server-1.1.463-amd64.deb --output /tmp/rstudio.deb && \
+    gdebi -n /tmp/rstudio.deb && \
+    rm -rf /tmp/rstudio.deb && \
+    apt-get autoremove -y && \
+    apt-get clean
+
+# R package
+RUN R -e 'source("https://bioconductor.org/biocLite.R")' && \
+    R -e 'BiocInstaller::biocLite(c("ChIPseeker"))'
+
 # Install conda
-RUN curl --location https://repo.continuum.io/miniconda/Miniconda2-4.6.14-MacOSX-x86_64.sh --output ~/miniconda.sh && \
+RUN curl --location https://repo.continuum.io/miniconda/Miniconda2-4.6.14-Linux-x86_64.sh --output ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh
 
@@ -74,22 +84,6 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> /etc/profile && \
 	echo 'LD_LIBRARY_PATH="/opt/conda/lib:${LD_LIBRARY_PATH}"' >> /etc/profile && \
 	echo "export LC_ALL=C.UTF-8" >> /etc/profile && \
     echo "export LANG=C.UTF-8" >> /etc/profile
-
-# R 3.5 & Rstudio
-RUN apt-get install -y --no-install-recommends --no-install-suggests \
-    gdebi-core software-properties-common && \
-    add-apt-repository -y 'deb http://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/' && \
-    apt-get -y update && \
-    apt-get install -y --allow-unauthenticated r-base r-base-dev && \
-    curl --location http://download2.rstudio.org/rstudio-server-1.1.463-amd64.deb --output /tmp/rstudio.deb && \
-    gdebi -n /tmp/rstudio.deb && \
-    rm -rf /tmp/rstudio.deb && \
-    apt-get autoremove -y && \
-    apt-get clean
-
-# R packages
-RUN R -e 'source("https://bioconductor.org/biocLite.R")' && \
-    R -e 'BiocInstaller::biocLite(c("ChIPseeker"))'
 
 # Add user and configure /opt/conda
 RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student && \
