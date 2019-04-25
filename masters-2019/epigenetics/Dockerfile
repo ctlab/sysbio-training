@@ -8,6 +8,7 @@ RUN apt-get update --fix-missing
 # Essential development tools and headers
 RUN apt-get -y --no-install-recommends --no-install-suggests install \
 		build-essential \
+		bc \
 		bzip2 \
 		cmake \
 		curl \
@@ -109,4 +110,12 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
 # expose default R-Studio port
 EXPOSE 8787
 USER root
+
+# Hacks to configure missing packages for Chipseeker
+RUN R -e 'install.packages("Matrix", repos = "http://cran.r-project.org")'
+RUN R -e 'install.packages("boot", repos = "http://cran.r-project.org")'
+RUN R -e 'install.packages("MASS", repos = "http://cran.r-project.org")'
+RUN R -e 'install.packages("KernSmooth", repos = "http://cran.r-project.org")'
+RUN R -e 'BiocManager::install("org.Hs.eg.db", version = "3.8")'
+
 CMD /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --server-app-armor-enabled=0
