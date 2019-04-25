@@ -3,10 +3,10 @@
 # Author oleg.shpynov@jetbrains.com
 # Author roman.chernyatchik@jetbrains.com
 
-which fastqc &>/dev/null || { echo "ERROR: fastqc not found!"; exit 1; }
+# Stop exec on error.
+set -e
 
-# Load utils
-source $(dirname $0)/util.sh
+which fastqc &>/dev/null || { echo "ERROR: fastqc not found!"; exit 1; }
 
 >&2 echo "Batch fastqc $@"
 if [[ $# -lt 1 ]]; then
@@ -31,7 +31,5 @@ do :
 
     fastqc --outdir "${RESULTS_DIR}" "${FILE}" 2>&1 | tee ${NAME}_fastqc.log
 done
-
-check_logs
 
 >&2 echo "Done. Batch fastqc $@"

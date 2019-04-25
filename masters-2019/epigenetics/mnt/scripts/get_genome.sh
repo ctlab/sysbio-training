@@ -2,6 +2,9 @@
 # Original https://github.com/JetBrains-Research/washu
 # Author oleg.shpynov@jetbrains.com
 
+# Stop exec on error.
+set -e
+
 >&2 echo "index-genome $@"
 if [[ $# -lt 2 ]]; then
     echo "Need 2 parameters! <GENOME> <FOLDER>"

@@ -2,10 +2,10 @@
 # Original https://github.com/JetBrains-Research/washu
 # Author oleg.shpynov@jetbrains.com
 
-which java &>/dev/null || { echo "ERROR: java not found!"; exit 1; }
+# Stop exec on error.
+set -e
 
-# Load utils
-source $(dirname $0)/util.sh
+which java &>/dev/null || { echo "ERROR: java not found!"; exit 1; }
 
 >&2 echo "Batch SPAN $@"
 if [[ $# -lt 4 ]]; then
@@ -59,7 +59,5 @@ do :
         fi
     fi
 done
-
-check_logs
 
 >&2 echo "Done. Batch SPAN $@"

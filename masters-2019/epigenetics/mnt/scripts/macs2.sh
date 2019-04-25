@@ -2,11 +2,11 @@
 # Original https://github.com/JetBrains-Research/washu
 # Author oleg.shpynov@jetbrains.com
 
+# Stop exec on error.
+set -e
+
 which macs2 &>/dev/null || { echo "ERROR: MACS2 not found! Download MACS2: <https://github.com/taoliu/MACS/wiki/Install-macs2>"; exit 1; }
 which Rscript &>/dev/null || { echo "ERROR: R not found!"; exit 1; }
-
-# Load utils
-source $(dirname $0)/util.sh
 
 >&2 echo "Batch macs2 $@"
 if [[ $# -lt 4 ]]; then
@@ -50,8 +50,6 @@ do :
         rm -rf ${TMP_DIR}
      fi
 done
-
-check_logs
 
 # Create pdf reports
 MODELS=$(ls *.r); for M in ${MODELS[@]}; do Rscript $M; done

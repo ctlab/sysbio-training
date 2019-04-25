@@ -2,11 +2,11 @@
 # Original https://github.com/JetBrains-Research/washu
 # Author oleg.shpynov@jetbrains.com
 
+# Stop exec on error.
+set -e
+
 which samtools &>/dev/null || { echo "ERROR: samtools not found!"; exit 1; }
 which bamCoverage &>/dev/null || { echo "ERROR: deeptools not found!"; exit 1; }
-
-# Load utils
-source $(dirname $0)/util.sh
 
 >&2 echo "Batch bigwig $@"
 if [[ $# -lt 1 ]]; then
@@ -25,7 +25,5 @@ do :
         bamCoverage --bam ${FILE} -o ${BW} 2>&1 | tee ${NAME}_bw.log
     fi
 done
-
-check_logs
 
 >&2 echo "Done. Batch bigwig $@"

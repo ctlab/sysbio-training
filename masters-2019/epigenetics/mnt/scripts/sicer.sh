@@ -2,6 +2,9 @@
 # Original https://github.com/JetBrains-Research/washu
 # Author oleg.shpynov@jetbrains.com
 
+# Stop exec on error.
+set -e
+
 which SICER.sh &>/dev/null || {
     echo "SICER not found! Download SICER: <http://home.gwu.edu/~wpeng/Software.htm>"
     echo "Please refer to README for installation instructions, modify scripts, i.e."
@@ -14,9 +17,6 @@ which SICER.sh &>/dev/null || {
 }
 
 which bedtools &>/dev/null || { echo "ERROR: bedtools not found!"; exit 1; }
-
-# Load util
-source $(dirname $0)/util.sh
 
 >&2 echo "Batch sicer $@"
 if [[ $# -lt 4 ]]; then
@@ -37,6 +37,35 @@ if [[ $# -ge 6 ]]; then FRAGMENT_SIZE=$6 ; fi
 
 GAP_SIZE=600
 if [[ $# -ge 7 ]]; then GAP_SIZE=$7 ; fi
+
+
+# Computes and returns pileup file for given BAM file
+function pileup(){
+    if [[ ! $# -eq 1 ]]; then
+        echo "Need 1 argument! <bam_file>"
+        exit 1
+    fi
+    BAM=$1
+    PILEUP_DIR="$(dirname ${BAM})/pileup"
+    if [[ ! -d ${PILEUP_DIR} ]]; then
+        >&2 echo "Create pileup dir ${PILEUP_DIR}"
+        mkdir -p ${PILEUP_DIR}
+    fi
+    NAME=$(basename ${BAM/.bam/_pileup.bed})
+    RESULT=${PILEUP_DIR}/${NAME}
+    if [[ ! -f ${RESULT} ]]; then
+        PILEUP_TMP=$(mktemp pileup.XXXXXX.bed)
+        >&2 echo "Calculate ${BAM} pileup file in tmp file: ${PILEUP_TMP}"
+        bedtools bamtobed -i ${BAM} > ${PILEUP_TMP}
+        # Check that we are the first in async calls, not 100% safe
+        if [[ ! -f ${RESULT} ]]; then
+            mv ${PILEUP_TMP} ${RESULT}
+        else
+            >&2 echo "Ignore result, file has been already calculated: ${RESULT}"
+        fi
+    fi
+    echo "${RESULT}"
+}
 
 cd ${WORK_DIR}
 
@@ -111,7 +140,5 @@ do :
         rm -r ${SICER_FOLDER}
     fi
 done
-
-check_logs
 
 >&2 echo "Done. Batch sicer $@"

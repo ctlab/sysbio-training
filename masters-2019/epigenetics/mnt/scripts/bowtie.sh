@@ -2,11 +2,11 @@
 # Original https://github.com/JetBrains-Research/washu
 # Author oleg.shpynov@jetbrains.com
 
+# Stop exec on error.
+set -e
+
 which bowtie &>/dev/null || { echo "ERROR: bowtie not found!"; exit 1; }
 which samtools &>/dev/null || { echo "ERROR: samtools not found!"; exit 1; }
-
-# Load utils
-source $(dirname $0)/util.sh
 
 >&2 echo "Batch bowtie $@"
 if [[ $# -lt 4 ]]; then
@@ -31,7 +31,7 @@ fi
 # Fails with large indexes, create soft link to indexes in working directory as a workaround
 # export BOWTIE_INDEXES=${INDEXES}
 if [[ ! -d "${WORK_DIR}/indexes" ]]; then
-    ln -s ${INDEXES} ${WORK_DIR}/indexes
+    ln -sf ${INDEXES} ${WORK_DIR}/indexes
 fi
 
 # Bowtie fails with large indexes, explicitly set
@@ -104,8 +104,6 @@ do :
     rm ${ID}.sam ${ID}_not_sorted.bam
 
 done
-
-check_logs
 
 # Cleanup indexes soft link
 if [[ -d "${WORK_DIR}/indexes" ]]; then
