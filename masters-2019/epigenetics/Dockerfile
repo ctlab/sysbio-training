@@ -46,10 +46,15 @@ RUN apt-get install -y --no-install-recommends --no-install-suggests \
     apt-get autoremove -y && \
     apt-get clean
 
-# R packages
+# R packages & # Hacks to configure missing packages for Chipseeker
 ENV CRAN_URL https://cloud.r-project.org/
 RUN R -e 'install.packages("BiocManager")' && \
-    R -e 'BiocManager::install("ChIPseeker", version = "3.8")'
+    R -e 'BiocManager::install("ChIPseeker", version = "3.8")' && \
+    R -e 'BiocManager::install("org.Hs.eg.db", version = "3.8")' && \
+    R -e 'install.packages("Matrix", repos = "http://cran.r-project.org")' && \
+    R -e 'install.packages("boot", repos = "http://cran.r-project.org")' && \
+    R -e 'install.packages("MASS", repos = "http://cran.r-project.org")' && \
+    R -e 'install.packages("KernSmooth", repos = "http://cran.r-project.org")'
 
 # Install conda
 RUN curl --location https://repo.continuum.io/miniconda/Miniconda2-4.6.14-Linux-x86_64.sh --output ~/miniconda.sh && \
@@ -110,12 +115,4 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
 # expose default R-Studio port
 EXPOSE 8787
 USER root
-
-# Hacks to configure missing packages for Chipseeker
-RUN R -e 'install.packages("Matrix", repos = "http://cran.r-project.org")'
-RUN R -e 'install.packages("boot", repos = "http://cran.r-project.org")'
-RUN R -e 'install.packages("MASS", repos = "http://cran.r-project.org")'
-RUN R -e 'install.packages("KernSmooth", repos = "http://cran.r-project.org")'
-RUN R -e 'BiocManager::install("org.Hs.eg.db", version = "3.8")'
-
 CMD /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --server-app-armor-enabled=0
