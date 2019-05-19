@@ -8,5 +8,4 @@ for t in `seq -w 0 $STUDENTS`; do
         -v /mnt/vol1/sbw-data/:/mnt:ro \
         -v $vol:/home/student \
         -t sbw-rnaseq 
-    break
 done
