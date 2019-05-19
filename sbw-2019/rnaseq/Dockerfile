@@ -70,7 +70,7 @@ RUN R -e 'BiocManager::install(c("tximport", "readr"))'
 
 
 RUN R -e 'install.packages(c("devtools"))'
-RUN R -e 'devtools::install_github("ctlab/fgsea", upgrade_dependencies=FALSE)'
+RUN R -e 'BiocManager::install("fgsea")'
 RUN R -e 'install.packages(c("ggrepel", "msigdbr", "pheatmap"))'
 RUN R -e 'BiocManager::install(c("GEOquery", "rhdf5"))'
 RUN R -e 'BiocManager::install("pachterlab/sleuth")'
@@ -117,6 +117,7 @@ RUN pip install rseqc
 # hot fixes here
 USER root
 
+
 RUN wget https://bitbucket.org/mzytnicki/multi-mapping-counter/get/master.zip -O /tmp/mmquant.zip && \
     cd /tmp && \
     unzip mmquant.zip && \
@@ -131,6 +132,8 @@ RUN echo export LC_ALL=C.UTF-8 >> /etc/profile && \
 
 ENV LC_ALL=C.UTF-8 
 ENV LANG=C.UTF-8 
+
+RUN conda install -c bioconda seqtk
 # hot fixes end
 
 

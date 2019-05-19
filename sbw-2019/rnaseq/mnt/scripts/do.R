@@ -1,7 +1,7 @@
 library(tximport)
 
 library(data.table)
-tx2gene <- fread("/mnt/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.tx2gene.tsv")
+tx2gene <- fread("/mnt/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.tx2gene.tsv")
 
 kallisto.files <- list.files("./kallisto", pattern="abundance.tsv", recursive = TRUE, full.names = TRUE)
 

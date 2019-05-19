@@ -18,7 +18,7 @@ head(fc_mat)
 library(Biobase)
 
 es <- ExpressionSet(fc_mat)
-pData(es)$condition <- gsub("MPH_", "", gsub("_rep.", "", colnames(es)))
+pData(es)$condition <- c(rep("Ctrl", 3), rep("LPS", 3))
 
 head(pData(es))
 head(fData(es))
@@ -36,6 +36,7 @@ fData(es)$symbol <- mapIds(org.Mm.eg.db, keys=fData(es)$ensembl,
 head(fData(es))
 
 exprs(es)[which(fData(es)$symbol == "Actb"), ]
+exprs(es)[which(fData(es)$symbol == "Acod1"), ]
 
 # PCA
 
