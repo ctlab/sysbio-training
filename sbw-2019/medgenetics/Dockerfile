@@ -108,6 +108,18 @@ RUN echo export LC_ALL=C.UTF-8 >> /etc/profile && \
 
 ENV LC_ALL=C.UTF-8 
 ENV LANG=C.UTF-8 
+
+RUN conda remove --force r-base 
+
+RUN R -e 'BiocManager::install(c("calibrate", "qqman", "ggplot2", "data.table", "SNPRelate", "gdsfmt"))'
+RUN R -e 'devtools::install_github(c("broadinstitute/gsalib"))'
+
+RUN R -e 'devtools::install_url(c("https://cran.r-project.org/src/contrib/Archive/GenABEL.data/GenABEL.data_1.0.0.tar.gz", "https://cran.r-project.org/src/contrib/Archive/GenABEL/GenABEL_1.8-0.tar.gz"))'
+
+RUN wget 'https://software.broadinstitute.org/gatk/download/auth?package=GATK-archive&version=3.8-1-0-gf15c1c3ef' -O /tmp/GATK-3.8.tar.bz2 && \
+    gatk3-register /tmp/GATK-3.8.tar.bz2 && \
+    rm /tmp/GATK-3.8.tar.bz2
+
 # hot fixes end
 
 

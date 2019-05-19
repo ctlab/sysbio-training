@@ -1,30 +1,40 @@
+##### Step 1: preparation
+
 # getting fastqs
 mkdir fastqs
-ln -s /mnt/rnaseq/fastqs/*.fastq.gz fastqs/
+ln -sf /mnt/RNAseq/GSE120762/downsampled/*.fastq.gz fastqs/
 
 # strting with only one sample
-TAG=MPH_untr_rep1
+TAG=SRR7956038
 
-# fastqc
+
+##### Step 2: fastqc
 
 OUTDIR="fastqc/$TAG"; mkdir -p "$OUTDIR"
-fastqc -o "$OUTDIR" "fastqs/$TAG.fastq.gz" |& tee "$OUTDIR/$TAG.fastqc.log"
+fastqc -o "$OUTDIR" "fastqs/${TAG}_1.fastq.gz" |& tee "$OUTDIR/${TAG}_1.fastqc.log"
 
-#======= Hisat2 pipeline ==========
+##### Step 3: alignment
 
-HISAT_IDX=/mnt/reference/Gencode_mouse/release_M20/GRCm38.primary_assembly
+HISAT_IDX=/mnt/RNAseq/reference/Gencode_mouse/release_M20/GRCm38.primary_assembly
 
 # aligning to the genome reference
 
 OUTDIR="hisat2/$TAG"; mkdir -p "$OUTDIR"
 date
 hisat2 -p 4 --new-summary -x  ${HISAT_IDX} \
-  -U "fastqs/$TAG.fastq.gz" \
-  2> "$OUTDIR/$TAG.hisat2.log" \
+  -U "fastqs/${TAG}_1.fastq.gz" \
+  2> "$OUTDIR/$TAG.log" \
   | samtools view -b - > "$OUTDIR/$TAG.raw.bam"
 date
 
 ls $OUTDIR
+cat $OUTDIR/$TAG.log
+
+##### Step 3.5: view the alignment
+
+samtools view "$OUTDIR/$TAG.bam" | head
+
+##### Step 4: post-processing of alignment
 
 # post-processing the alignments
 
@@ -34,65 +44,59 @@ samtools sort -@ 4 -O bam "$OUTDIR/$TAG.raw.bam" > "$OUTDIR/$TAG.bam" && \
   rm -v "$OUTDIR/$TAG.raw.bam"
 date
 
+##### Step 5: generate coverage file
+
 # calculating coverage for vizualization
 bamCoverage -b "$OUTDIR/$TAG.bam" -o "$OUTDIR/$TAG.cov.bw" |& tee "$OUTDIR/$TAG.bamcov.log"
 
-# QC
 
-REFGENE_MODEL=/mnt/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
+##### Step 5: QC
+
+REFGENE_MODEL=/mnt/RNAseq/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
 infer_experiment.py -i "$OUTDIR/$TAG.bam" \
   -r $REFGENE_MODEL | tee "$OUTDIR/$TAG.infer_experiment.txt"
 
-REFGENE_MODEL=/mnt/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
+REFGENE_MODEL=/mnt/RNAseq/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
 read_distribution.py -i "$OUTDIR/$TAG.bam" \
   -r $REFGENE_MODEL | tee "$OUTDIR/$TAG.read_distribution.txt"
 
-# REFGENE_MODEL=/mnt/reference/Gencode_mouse/release_M20/mm10.HouseKeepingGenes.bed
+# REFGENE_MODEL=/mnt/RNAseq/reference/Gencode_mouse/release_M20/mm10.HouseKeepingGenes.bed
 # geneBody_coverage.py \
 #   -i $OUTDIR/$TAG.bam \
 #   -o $OUTDIR/$TAG \
-#   -r $REFGENE_MODEL 
+#   -r $REFGENE_MODEL
   
+##### Step 6: counting reads
 
-# Counting reads
-
-GTF=/mnt/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.gtf
+GTF=/mnt/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.gtf
 
 OUTDIR="featureCounts/$TAG"; mkdir -p "$OUTDIR"
 date
-featureCounts -a "$GTF" -s 0 -o "$OUTDIR/$TAG.fc.txt" \
-  "hisat2/$TAG/$TAG.bam" |& tee "$OUTDIR/$TAG.fc.log"
+featureCounts -a "$GTF" -s 2 -o "$OUTDIR/$TAG.fc.txt" \
+  "hisat2/$TAG/$TAG.bam" |& tee "$OUTDIR/$TAG.log"
 date
 
 head "$OUTDIR/$TAG.fc.txt"
 wc -l "$OUTDIR/$TAG.fc.txt"
 
 
-#========== Kallisto ======================
+##### Step 7: Kallisto
 
 mkdir kallisto
 
-KALLISTO_IDX=/mnt/reference/Gencode_mouse/release_M20/gencode.vM20.transcripts.kalliso.idx
+KALLISTO_IDX=/mnt/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.transcripts.kalliso.idx
 
 OUTDIR="kallisto/$TAG"; mkdir -p "$OUTDIR"
 date
 # --single -l and -s option should be set for each dataset separately, 200+-50 is most common for single end
 kallisto quant -i $KALLISTO_IDX -t 4 \
   --single -l 200 -s 50 \
+  --rf-stranded \
   --plaintext \
   -o $OUTDIR \
-  fastqs/$TAG.fastq.gz |& tee $OUTDIR/$TAG.kallisto.log
+  fastqs/${TAG}_1.fastq.gz |& tee $OUTDIR/$TAG.log
 date
 
-#========== multiqc for everything =============
+##### Step 8: multiqc for everything
 
 multiqc -x .Rproj.user -f .
-
-
-#========== mmquant ============
-OUTDIR="mmquant/$TAG"; mkdir -p "$OUTDIR"
-GTF=/mnt/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.gtf
-date
-mmquant -a "$GTF" -s U -o "$OUTDIR/$TAG.mmq.txt" \
-  -r "hisat2/$TAG/$TAG.bam" |& tee "$OUTDIR/$TAG.mmq.log"
-date
