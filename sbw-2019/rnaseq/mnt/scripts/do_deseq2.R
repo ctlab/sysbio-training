@@ -1,3 +1,5 @@
+# Step 0: importing gene count matrix
+
 source("./functions.R")
 library(data.table)
 
@@ -12,8 +14,9 @@ tags <- sapply(fc.files, function (x) gsub(".fc.txt", "", basename(x), fixed=TRU
 colnames(fc_mat) <- tags
 
 head(fc_mat)
+tail(fc_mat)
 
-# creating an expression set object
+# Step 1: creating an ExpressionSet object
 
 library(Biobase)
 
@@ -38,7 +41,7 @@ head(fData(es))
 exprs(es)[which(fData(es)$symbol == "Actb"), ]
 exprs(es)[which(fData(es)$symbol == "Acod1"), ]
 
-# PCA
+# Step 2: getting a quantile normalized file
 
 library(limma)
 library(ggplot2)
@@ -57,6 +60,7 @@ es.qnorm.top12K <- es.qnorm.top12K[!is.na(fData(es.qnorm.top12K)$entrez), ]
 es.qnorm.top12K <- es.qnorm.top12K[1:12000,]
 write.gct(es.qnorm.top12K, file="./es.qnorm.top12k.gct")
 
+# Step 3: PCA plot
 
 p <- pcaPlot(es.qnorm.top12K, 1, 2) + 
   aes(color=condition) + 
@@ -64,7 +68,7 @@ p <- pcaPlot(es.qnorm.top12K, 1, 2) +
 print(p)
 ggsave(p, width=6, height=4, file="./es.pca12.png")
 
-# differential expression with DESeq2
+# Step 4: differential expression with DESeq2
 
 library(DESeq2)
 dds <- DESeqDataSetFromMatrix(exprs(es), pData(es), design=~condition)
@@ -78,8 +82,8 @@ plotPCA(vst)
 
 dir.create("./de/", showWarnings = F)
 unique(dds$condition)
-# log2FC = IL4 - untr
-de <- results(dds, contrast = c("condition", "IL4", "untr"), cooksCutoff = F)
+# log2FC = LPS - Ctrl
+de <- results(dds, contrast = c("condition", "LPS", "Ctrl"), cooksCutoff = F)
 head(de)
 de <- data.table(ID=rownames(de), as.data.table(de))
 head(de)
@@ -90,54 +94,36 @@ de <- de[ID %in% rownames(es.qnorm.top12K), ]
 de <- de[order(stat), ]
 de
 
-de[symbol == "Arg1"]
+de[symbol == "Acod1"]
 
-fwrite(de, file="./de/untr.vs.IL4.de.tsv", sep="\t")
+fwrite(de, file="./de/Ctrl.vs.LPS.de.tsv", sep="\t")
 
-
-# pathway analysis with fgsea
+# Step 5: pathway analysis with fgsea
 
 stats <- de[, setNames(stat, entrez)]
 library(msigdbr)
-# GO BP pathways from MSigDB
-m_df <- msigdbr(species = "Mus musculus", category = "C5", subcategory = "BP")
+# Hallmark pathways from MSigDB
+m_df <- msigdbr(species = "Mus musculus", category = "H")
 m_df
 pathways <- split(m_df$entrez_gene, m_df$gs_name)
 
 library(fgsea)
-fr <- fgsea(pathways, stats, nperm = 100000, nproc=4, minSize=15, maxSize=500)
-fr[order(pval)]
-frML <- fgseaMultilevel(pathways, stats,
-                        sampleSize = 100,
-                        nproc=4, minSize=15, maxSize=500)
-frML[order(pval)]
 
-frML[padj < 0.01]
+fr <- fgseaMultilevel(pathways, stats,
+                      sampleSize = 100,
+                      nproc=4, 
+                      minSize=15, maxSize=500, 
+                      absEps=1e-10)
+fr[padj < 0.01][order(NES)]
 
-collapsedPathways <- collapsePathways(fr[order(pval)][padj < 0.01], pathways, stats)
-str(collapsedPathways)
-
-mainPathways <- frML[pathway %in% collapsedPathways$mainPathways][
-  order(sign(ES)*log(pval)), pathway]
-
-frMain <- frML[match(mainPathways, pathway)]
-frMain[, leadingEdge := lapply(leadingEdge, mapIds, 
-                               x=org.Mm.eg.db, keytype="ENTREZID", column="SYMBOL")]
 dir.create("gsea")
-fwrite(frMain, file="gsea/untr.vs.IL4.filtered.tsv", sep="\t", sep2=c("", " ", ""))
+fwrite(fr, file="gsea/Ctrl.vs.LPS.filtered.tsv", sep="\t", sep2=c("", " ", ""))
 
-pdf("gsea/untr.vs.IL4.pdf", width=12, height=2 + length(mainPathways) * 0.25)
-plotGseaTable(pathways = pathways[mainPathways], stats = stats, fgseaRes=frMain, gseaParam = 0.5)
+mainPathways <- fr[padj < 0.01][order(NES)][, pathway]
+pdf("gsea/Ctrl.vs.LPS.pdf", width=12, height=2 + length(mainPathways) * 0.25)
+plotGseaTable(pathways = pathways[mainPathways], stats = stats, fgseaRes=fr, gseaParam = 0.5)
 dev.off()
 
-fr[, leadingEdge := NULL]
-fwrite(frML[order(sign(ES)*log(pval))], file="./gsea/untr.vs.IL4.full.tsv", sep="\t") 
 
-plotEnrichment(pathways[["GO_DEFENSE_RESPONSE_TO_VIRUS"]], stats) + 
-  ggtitle("Defense reponse to virus")
-
-plotEnrichment(pathways[["GO_NUCLEOSIDE_TRIPHOSPHATE_METABOLIC_PROCESS"]], stats) + 
-  ggtitle("Nucleotide triphosphate metabolism")
-
-plotEnrichment(pathways[["GO_CELLULAR_RESPONSE_TO_CYTOKINE_STIMULUS"]], stats) + 
-  ggtitle("Cellular response to cytokines")
+plotEnrichment(pathways$HALLMARK_INTERFERON_GAMMA_RESPONSE, stats = stats) +
+  ggtitle("INFg response")

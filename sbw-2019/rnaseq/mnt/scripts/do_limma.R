@@ -48,4 +48,4 @@ de <- topTable(fit2, adjust.method="BH", number=Inf)
 head(de)
 library(data.table)
 de <- as.data.table(de, keep.rownames=TRUE)
-de[symbol == "Nos2"]
+de[symbol == "Acod1"]
