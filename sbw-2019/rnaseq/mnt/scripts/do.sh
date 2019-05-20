@@ -32,7 +32,7 @@ cat $OUTDIR/$TAG.log
 
 ##### Step 3.5: view the alignment
 
-samtools view "$OUTDIR/$TAG.bam" | head
+samtools view "$OUTDIR/$TAG.raw.bam" | head
 
 ##### Step 4: post-processing of alignment
 
@@ -50,7 +50,7 @@ date
 bamCoverage -b "$OUTDIR/$TAG.bam" -o "$OUTDIR/$TAG.cov.bw" |& tee "$OUTDIR/$TAG.bamcov.log"
 
 
-##### Step 5: QC
+##### Step 6: QC
 
 REFGENE_MODEL=/mnt/RNAseq/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
 infer_experiment.py -i "$OUTDIR/$TAG.bam" \
@@ -66,7 +66,7 @@ read_distribution.py -i "$OUTDIR/$TAG.bam" \
 #   -o $OUTDIR/$TAG \
 #   -r $REFGENE_MODEL
   
-##### Step 6: counting reads
+##### Step 7: counting reads
 
 GTF=/mnt/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.gtf
 
@@ -80,7 +80,7 @@ head "$OUTDIR/$TAG.fc.txt"
 wc -l "$OUTDIR/$TAG.fc.txt"
 
 
-##### Step 7: Kallisto
+##### Step 8: Kallisto
 
 mkdir kallisto
 
@@ -97,6 +97,8 @@ kallisto quant -i $KALLISTO_IDX -t 4 \
   fastqs/${TAG}_1.fastq.gz |& tee $OUTDIR/$TAG.log
 date
 
-##### Step 8: multiqc for everything
+head $OUTDIR/abundance.tsv
+
+##### Step 9: multiqc for everything
 
 multiqc -x .Rproj.user -f .
