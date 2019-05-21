@@ -23,10 +23,11 @@ SE=26
 for t in `seq -w $SS $SE`; do 
     t10=$(echo $t | sed 's/^0//g');  
 	vol=/mnt/vol$(((t10)%4+1))/student$t
+	rm -rf vol
 	echo $t $vol
     docker run --name sb$t -m 32g --cpus=6 -d -p 87$t:8787 \
         -v /scratch/oshpynov/mnt:/mnt:ro \
-        -v /mnt/vol$(((t10)%4+1))/student$t/student$t:/home/student \
+        -v $vol:/home/student \
         -t sbw-epi; 
 done
 ```
