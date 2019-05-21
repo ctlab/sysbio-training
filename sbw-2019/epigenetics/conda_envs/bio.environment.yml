@@ -1,0 +1,16 @@
+name: bio
+channels:
+  - bioconda
+  - defaults
+dependencies:
+  - macs2=2.1.1.20160309
+  - sicer=1.1
+  - scipy=1.1.0
+  - sra-tools=2.8.2
+  - fastqc=0.11.5
+  - java-jdk=8.0.92
+  - multiqc=0.9
+  - bowtie=1.2.0
+  - samtools=1.7
+  - deeptools=3.2.1
+  - bedtools=2.26.0

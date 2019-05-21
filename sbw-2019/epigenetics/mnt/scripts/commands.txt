@@ -1,0 +1,105 @@
+# Create working directory and create symlinks for data
+mkdir ~/data
+for F in $(ls /mnt/data/*.f*q); do ln -sf $F ~/data/; done
+
+# Inspect your data
+tree ~/data/
+
+
+# QC
+bash /mnt/scripts/fastqc.sh ~/data
+# Aggregated report
+multiqc -f -o ~/data/fastqc ~/data/fastqc
+
+# Alignment
+bash /mnt/scripts/bowtie.sh hg19 /mnt/index/hg19/ 0 ~/data
+# Alignment report
+multiqc -f -o ~/data/bams_qc ~/data/*_bowtie*.log
+
+# Visualize your data to open in JBR/IGV
+bash /mnt/scripts/bigwig.sh ~/data
+
+# Organise our data by folders
+mkdir ~/bw
+mv ~/data/*.bw ~/bw
+
+# Peak calling using MACS2
+bash /mnt/scripts/macs2.sh ~/data hg19 "q0.05" "-q 0.05"
+
+# Organize results
+mkdir ~/macs2
+mv ~/data/*q0.05* ~/macs2/
+
+# Check logs
+ls ~/data/*macs*.log
+
+# Peak calling using MACS2 with --broad option
+bash /mnt/scripts/macs2.sh ~/data hg19 "broad_0.1" "--broad --broad-cutoff 0.1"
+
+# Organize results
+mkdir ~/macs2_broad
+mv ~/data/*broad* ~/macs2_broad/
+
+# Use this command to get most confident peaks
+cat ~/macs2_broad/GSM1102785_CD14_H3K27me3_hg19.chr15_hg19_broad_0.1_peaks.broadPeak | sort -k9,9r
+
+# Launch SICER peak caller
+bash /mnt/scripts/sicer.sh ~/data/ hg19 /mnt/index/hg19/hg19.chrom.sizes 0.05
+
+# Move results to sicer folder
+mkdir ~/sicer
+ls ~/data/* | grep island | xargs -I {} mv {} ~/sicer
+ls ~/data/* | grep sicer | xargs -I {} mv {} ~/sicer
+
+# Command to find out the bed file with biggest number of lines
+ls ~/sicer/*island.bed | xargs wc -l | grep -v total | sort -k1,1nr
+
+# Sort BED file by chromosome and by start position
+cat /home/student/sicer/GSM1102793_CD14_H3K4me1_hg19.chr15_hg19-W200-G600-FDR0.05-island.bed | sort -k1,1 -k2,2n > sorted.bed
+
+# Command to launch SPAN peak caller
+bash /mnt/scripts/span.sh /mnt/tools/span-0.11.0.4882.jar ~/data/ hg19 /mnt/index/hg19/hg19.chrom.sizes
+
+# Command to get all SPAN models
+tree ~/data/ | grep "\.span"
+
+# Move all the SPAN models to a single folder
+mkdir ~/span_models
+find ~/data/ -name "*.span" | xargs -I {} mv {} ~/span_models/
+
+# Convert GTF file to BED file, FILTER out the transcripts and SORTING the result and FILTER out all the non-chromosome positions and TAB separated. ONLY 15 chromosome is taken into account
+cat /mnt/genes/gencode.v30lift37.annotation.gtf | grep -v "#" | grep "^chr15" | awk -v OFS='\t'  '($3=="gene") {print $1,$4-1,$5,$10}' | sort -k1,1 -k2,2n > ~/gencode.v30lift37.annotation.bed
+
+# Find the closest genes for the peak file
+bedtools closest -a macs2_broad/GSM1102797_CD14_H3K4me3_hg19.chr15_hg19_broad_0.1_peaks.broadPeak -b gencode.v30lift37.annotation.bed -D ref | head -n 1
+
+# Plot profile signal, which consists of 2 steps
+# Step 1 - matrix computation
+computeMatrix reference-point -S bw/GSM1102797_CD14_H3K4me3_hg19.chr15_hg19.bw -R gencode.v30lift37.annotation.bed -a 3000 -b 3000 -out matrix.tsv.gz
+
+# Step2 - plot profile
+plotProfile -m matrix.tsv.gz -out TssProfile.png --plotTitle "TSS K4me3 profile"
+
+# Switch to R console
+.libPaths('/usr/local/lib/R/site-library')
+library(ChIPseeker)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+peaks <- readPeakFile("macs2_broad/GSM1102797_CD14_H3K4me3_hg19.chr15_hg19_broad_0.1_peaks.broadPeak")
+peaks
+
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+peakAnno <- annotatePeak("macs2_broad/GSM1102797_CD14_H3K4me3_hg19.chr15_hg19_broad_0.1_peaks.broadPeak", tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+plotAnnoPie(peakAnno)
+plotAnnoBar(peakAnno)
+
+# Switch back to BASH
+# Preparing my peaks file for uploading to GREAT, picking first 3 columns
+cat ~/macs2/GSM1102797_CD14_H3K4me3_hg19.chr15_hg19_q0.05_peaks.narrowPeak | awk -v OFS='\t' '{print($1,$2,$3)}' > ~/h3k4me3.bed
+
+# Take head 100 and tail 100 peaks, pay attention to appending results to a file
+head -n 100 h3k4me3.bed > h3k4me3_200.bed
+tail -n 100 h3k4me3.bed >> h3k4me3_200.bed
+
+# Now you can try GREAT with background
