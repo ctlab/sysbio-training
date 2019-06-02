@@ -1,6 +1,6 @@
 The materials from the scRNA-sequencing module (SBW 2019, Saint Peterburg, May 21st)
 
-Original scripts from Alexey Sergushiched, slightly modified by Konstantin Zaitsev
+Original scripts from Alexey Sergushichev, slightly modified by Konstantin Zaitsev
 
 ## Building
 
