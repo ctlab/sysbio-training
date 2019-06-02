@@ -120,6 +120,8 @@ RUN wget 'https://software.broadinstitute.org/gatk/download/auth?package=GATK-ar
     gatk3-register /tmp/GATK-3.8.tar.bz2 && \
     rm /tmp/GATK-3.8.tar.bz2
 
+RUN R -e 'BiocManager::install(c("reshape", "gplots"))'
+
 # hot fixes end
 
 
