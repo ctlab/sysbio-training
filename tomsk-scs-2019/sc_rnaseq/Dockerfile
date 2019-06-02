@@ -123,8 +123,7 @@ RUN R -e 'devtools::install_github("AnalytixWare/ShinySky")'
 RUN R -e 'install.packages(c("DT"))'
 
 
-RUN conda install samtools 
-RUN conda install deeptools
+RUN conda install -c bioconda samtools deeptools
 
 
 EXPOSE 8787
