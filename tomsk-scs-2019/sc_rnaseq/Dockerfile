@@ -122,6 +122,11 @@ RUN R -e 'install.packages(c("shinyjs", "RColorBrewer", "scales"))'
 RUN R -e 'devtools::install_github("AnalytixWare/ShinySky")'
 RUN R -e 'install.packages(c("DT"))'
 
+
+RUN conda install samtools 
+RUN conda install deeptools
+
+
 EXPOSE 8787
 
 USER root
