@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Introduction to gene expression</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Kontantin Zaitsev" />
+    <link rel="stylesheet" href="../libs/itmo.css" type="text/css" />
+    <link rel="stylesheet" href="../libs/itmo-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Introduction to gene expression
+### Kontantin Zaitsev
+### September 21<sup>th</sup>, 2019
+
+---
+
+
+class: center, middle
+
+# About the course
+
+---
+
+## About the course
+
+Authors of this course:
+
+1. Konstantin Zaitsev, https://www.researchgate.net/profile/Konstantin_Zaitsev, https://stepik.org/course/512/
+2. Alexander Tkachenko, https://publons.com/researcher/3041889/alexander-tkachenko/, https://stepik.org/course/94/
+
+
+---
+
+## About the course
+
+* Course is scientific-oriented
+* Course materials are in english
+* By “gene expression” we almost always mean “RNA expression” if not said otherwise
+
+Most important link: https://konsolerr.github.io/gene_expression_2019/
+
+---
+
+## About the course
+
+* 12 lessons (last is Dec 7th)
+* Most of these lessons are seminars: both lectures and practice on your laptops
+* 4 large homeworks
+
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Most important link: https://konsolerr.github.io/gene_expression_2019/&lt;/span&gt;&lt;/div&gt; 
+---
+
+## About the course: prerequisites
+
+* You are expected to be able to use google
+* You are expected to be able to read documentation / papers
+* Latest R (https://cran.r-project.org/bin/, or just google like "how to install latest R on my favourite operating system")
+* Rstudio (https://www.rstudio.com/)
+* 4 large homeworks which you will have to defend ( in person (?) )
+
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Most important link: https://konsolerr.github.io/gene_expression_2019/&lt;/span&gt;&lt;/div&gt; 
+---
+
+## About the course: syllabus
+
+.tiny[
+* Central dogma of molecular biology, structure of gene, types of RNA, structure of RNA, transcription, reverse transcription, qPCR, FISH, FACS
+* Microarray: quantification, normalization, basic analysis
+* RNA-seq: alignment, quantification, QC, normalization, basic analysis
+* Overall quality control: PCA, clustering, outlier detection
+* Overall quality control: batch correction
+* Differential expression (DE): limma for microarray, Deseq2 for RNA-seq
+* Downstream analysis: pathway/gene set enrichment analysis
+* Downstream analysis: gene expression deconvolution
+* Transcriptome assembly, functional annotation
+* Single-cell transcriptomics: Seurat basic analysis
+* Single-cell transcriptomics: Trajectory analysis, RNA velocity, optimal transport
+* Visual data exploration: phantasus, JBR genome browser
+* Experimental design of gene expression study
+
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Most important link: https://konsolerr.github.io/gene_expression_2019/&lt;/span&gt;&lt;/div&gt; 
+---
+
+class: center, middle
+
+# Measuring RNA abundance
+
+---
+
+## Why we measure RNA abundance
+
+&lt;img src="dogma.png" width="55%"&gt;
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.ncbi.nlm.nih.gov/pubmed/26259698&lt;/span&gt;&lt;/div&gt; 
+
+---
+## Why we measure RNA abundance
+
+&lt;img src="two_correlations.png"&gt;
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.cell.com/cell/pdf/S0092-8674(16)30270-7.pdf&lt;/span&gt;&lt;/div&gt; 
+
+--
+
+* A is very often the case
+* B is almost never the case
+
+---
+## Why we measure RNA abundance
+
+* While proteins are the key players in biological processes, RNA abundance is a good enough approximation for protein abundance
+
+
+* Measuring RNA abundance is **much easier**
+
+
+* Given several conditions and a gene: for &lt;strong class='red'&gt;the same gene&lt;/strong&gt; fold change in RNA abundance will inform us aboust fold change in protein level
+---
+## Structure of mRNA
+
+* We are mostly interested in mRNA (messgenger RNA), because it is protein coding RNA
+* Estimated 10&lt;sup&gt;5&lt;/sup&gt; to 10&lt;sup&gt;6&lt;/sup&gt; mRNA molecules per animal cell with high dynamic range for genes: from several copies to 10&lt;sup&gt;4&lt;/sup&gt;
+
+&lt;div class="my-footer"&gt;&lt;span&gt;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3129258/
+ and https://bionumbers.hms.harvard.edu/bionumber.aspx?id=111220&lt;/span&gt;&lt;/div&gt; 
+
+&lt;img src="mrna.png"&gt;
+
+---
+## Types of RNA
+
+* rRNA - ribosomal RNA: 80% of total cell RNA
+* tRNA - transfer RNA: 15% of the cell RNA
+* mRNA - messenger RNA for protein-coding genes
+* Orther RNAs: miRNA, lncRNA
+
+---
+## Strategies to capture RNA
+
+|Strategy         |	Type of RNA	    | Ribosomal RNA content	 | Unprocessed RNA content	| Genomic DNA content | Isolation method                                             |
+|:----------------|:---------------:|:----------------------:|:------------------------:|:-------------------:|:------------------------------------------------------------:|
+|Total  RNA       |All	            | High                   |High	                    |High	                |   None                                                       |
+|PolyA selection	|Coding           |	Low	                   |Low	                      |Low	                |Hybridization with poly(dT) oligomers                         |
+|rRNA depletion	  |Coding, noncoding|	Low	                   |High	                    |High	                |Removal of oligomers complementary to rRNA                    |
+|RNA capture	    |Targeted	        | Low	                   |Moderate	                |Low	                |Hybridization with probes complementary to desired transcripts|
+
+---
+
+## Why we measure RNA abundance
+
+What can be a sample? RNA isolated from pretty much anywhere
+
+* Blood draw
+* Tissue / organ
+* Specific isolated cell type
+
+---
+
+## Gene expression studies
+
+
+* Usually you have the phenotype, but you don't know why it happens
+* You take samples from several conditions related to you phenotype
+* You try to figure out what is different in your phenotype from the control (or other condition)
+
+---
+
+## Berry et al, 2010
+
+
+.center[
+  &lt;img src="es_title.png" width="900"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.nature.com/articles/nature09247&lt;/span&gt;&lt;/div&gt; 
+
+
+---
+
+## Berry et al, 2010
+
+
+.center[
+  &lt;img src="es_title.png" width="400"&gt;
+]
+
+"Most people infected with M. tuberculosis remain asymptomatic, termed latent TB, with a 10% lifetime risk of developing active TB disease. Current tests, however, cannot identify which individuals will develop disease 3 ."
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.nature.com/articles/nature09247&lt;/span&gt;&lt;/div&gt; 
+
+
+---
+
+## Berry et al, 2010
+
+
+* Here we identify a whole-blood 393 transcript signature for active TB in intermediate and high-burden settings, correlating with radiological extent of disease and reverting to that of healthy controls after treatment
+* A subset of patients with latent TB had signatures similar to those in patients with active TB
+* We also identify a specific 86-transcript signature that discriminates active TB from other inflammatory and infectious diseases
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.nature.com/articles/nature09247&lt;/span&gt;&lt;/div&gt; 
+
+
+---
+
+## Berry et al, 2010
+
+.center[
+  &lt;img src="ge_heatmap.png" width="500"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.nature.com/articles/nature09247&lt;/span&gt;&lt;/div&gt; 
+
+
+---
+
+## Berry et al, 2010
+
+.center[
+  &lt;img src="ge_ifn_signaling.png" width="550"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.nature.com/articles/nature09247&lt;/span&gt;&lt;/div&gt; 
+
+
+---
+
+## Berry et al, 2010
+
+.center[
+  &lt;img src="cell_proportions.png" width="800"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.nature.com/articles/nature09247&lt;/span&gt;&lt;/div&gt; 
+
+
+---
+
+## How do we know what's diffent
+
+Main word behind comparative gene expression studies is **differential expression** (DE). 
+
+* Given two conditions *A* and *B* 
+* We try to find genes for which we can statistically confirm that their average expression level in these two conditions is different
+
+Briefly speaking, differential expression tests are statistical frameworks to identify genes of possible interest.
+
+We say that gene is differentially expressed, when they have different average expression levels (between conditions).
+
+
+---
+## What else
+
+
+* Previous example was about gene expression on a **gene level**
+* We can go to **transcript level** and detect differnt isoforms
+
+---
+
+class: center, middle
+
+# Alternative splicing
+
+---
+
+## Terminology
+
+
+* Alternative splicing, alternative transcription start- and termination sites
+* All of the above we wall alternative splicing
+* All of the above events expend RNA repertoire of most human genes
+
+---
+
+## Isoform switch
+
+
+* Isoform switch is one of alternative splicing scenarios
+* Under certain condition, gene is spliced differently
+
+.center[
+  &lt;img src="switch.png" width="300"&gt;
+]
+
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://mcr.aacrjournals.org/content/15/9/1206.figures-only&lt;/span&gt;&lt;/div&gt; 
+---
+
+## Isoform switch
+
+.center[
+  &lt;img src="tet1_abstract.png" width="550"&gt;
+]
+
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.ncbi.nlm.nih.gov/pubmed/27916660&lt;/span&gt;&lt;/div&gt; 
+
+---
+
+## Isoform switch
+
+.center[
+  &lt;img src="tet1_isoform.png" width="800"&gt;
+]
+
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.ncbi.nlm.nih.gov/pubmed/27916660&lt;/span&gt;&lt;/div&gt; 
+
+---
+
+## Isoform switch
+
+.center[
+  &lt;img src="validation.png" width="600"&gt;
+]
+
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.ncbi.nlm.nih.gov/pubmed/27916660&lt;/span&gt;&lt;/div&gt; 
+
+---
+
+## What else
+
+* Mouse and human (I mostly work with) are very well annotated
+* What if the organism of intereset is not well-studied?
+
+---
+
+
+class: center, middle
+
+# Transcriptome assembly and functional annotation
+
+---
+
+## Transcriptome assembly
+
+
+* RNA-Seq Assembly is an identification of all expressed isoforms from RNA-seq
+* Reference-guided Transcriptome assembly
+* De nove RNA-seq Assembly
+
+---
+
+## Functional annotation
+
+
+* Predicting gene/transcript function
+* Homology search to known sequence data
+* Protein domain identification
+* Protein signal peptide and transmembrane domain prediction 
+
+---
+
+## Example study
+
+
+.center[
+  &lt;img src="axolotl_abstract.png" width="600"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.cell.com/action/showPdf?pii=S2211-1247%2816%2931770-3&lt;/span&gt;&lt;/div&gt; 
+---
+
+## Example study
+
+
+.center[
+  &lt;img src="axolotl_design.png" width="700"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.cell.com/action/showPdf?pii=S2211-1247%2816%2931770-3&lt;/span&gt;&lt;/div&gt; 
+---
+
+
+## Example study
+
+
+.center[
+  &lt;img src="comparison.png" width="600"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.cell.com/action/showPdf?pii=S2211-1247%2816%2931770-3&lt;/span&gt;&lt;/div&gt; 
+---
+
+class: center, middle
+
+# Single-cell technologies
+
+## Spoiler alert: I can talk about this for **days**
+
+---
+
+## Single-cell RNA-seq
+
+* These days we can measure RNA abundance within single cells
+* Better resolution: more samples (cells), better understanding where changes are coming from
+* Worse resolution: we have much less RNA within a single cell than within a sample. We can capture even less. We can sequence even less
+
+---
+
+
+## Single-cell RNA-seq
+
+.center[
+  &lt;img src="sc_tech.png" width="800"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.cell.com/action/showPdf?pii=S1097-2765%2815%2900261-0&lt;/span&gt;&lt;/div&gt; 
+---
+
+
+
+
+## Single-cell RNA-seq
+
+.center[
+  &lt;img src="sc_isolation.png" width="700"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://www.cell.com/action/showPdf?pii=S1097-2765%2815%2900261-0&lt;/span&gt;&lt;/div&gt; 
+---
+## Single-cell RNA-seq
+
+.center[
+  &lt;img src="sc_abs.png" width="500"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://science.sciencemag.org/content/356/6335/eaah4573&lt;/span&gt;&lt;/div&gt; 
+
+---
+
+## Single-cell RNA-seq
+
+.center[
+  &lt;img src="sc_study_design_2.png" width="600"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://science.sciencemag.org/content/356/6335/eaah4573&lt;/span&gt;&lt;/div&gt; 
+
+---
+
+## Single-cell RNA-seq
+
+.pull-left[
+
+* Performed scRNA-seq on myeloid blood cells
+* Compared existed classification with their findings
+* Inentified new subsets
+
+]
+
+.pull-right[
+  &lt;img src="sc_study_design.png" width="400"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Taken from https://science.sciencemag.org/content/356/6335/eaah4573&lt;/span&gt;&lt;/div&gt; 
+
+---
+
+class: center, middle
+
+# Endnotes
+
+---
+
+## Why this way?
+
+* We will cover things mostaly in chronological order
+* Basic models and frameworks will get more complicated as we get through
+
+---
+
+class: center, middle
+
+# Any questions ?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
