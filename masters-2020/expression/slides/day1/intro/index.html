@@ -3,17 +3,17 @@
   <head>
     <title>Introduction to gene expression</title>
     <meta charset="utf-8" />
-    <meta name="author" content="Kontantin Zaitsev" />
-    <link rel="stylesheet" href="../libs/itmo.css" type="text/css" />
-    <link rel="stylesheet" href="../libs/itmo-fonts.css" type="text/css" />
+    <meta name="author" content="Konstantin Zaitsev" />
+    <link rel="stylesheet" href="../../libs/itmo.css" type="text/css" />
+    <link rel="stylesheet" href="../../libs/itmo-fonts.css" type="text/css" />
   </head>
   <body>
     <textarea id="source">
 class: center, middle, inverse, title-slide
 
 # Introduction to gene expression
-### Kontantin Zaitsev
-### September 21<sup>th</sup>, 2019
+### Konstantin Zaitsev
+### March 16<sup>th</sup>, 2019
 
 ---
 
@@ -37,33 +37,21 @@ Authors of this course:
 ## About the course
 
 * Course is scientific-oriented
-* Course materials are in english
 * By “gene expression” we almost always mean “RNA expression” if not said otherwise
 
-Most important link: https://konsolerr.github.io/gene_expression_2019/
+Most important link: TODO
 
----
-
-## About the course
-
-* 12 lessons (last is Dec 7th)
-* Most of these lessons are seminars: both lectures and practice on your laptops
-* 4 large homeworks
-
-
-&lt;div class="my-footer"&gt;&lt;span&gt;Most important link: https://konsolerr.github.io/gene_expression_2019/&lt;/span&gt;&lt;/div&gt; 
 ---
 
 ## About the course: prerequisites
 
 * You are expected to be able to use google
 * You are expected to be able to read documentation / papers
-* Latest R (https://cran.r-project.org/bin/, or just google like "how to install latest R on my favourite operating system")
-* Rstudio (https://www.rstudio.com/)
-* 4 large homeworks which you will have to defend ( in person (?) )
+* You will be given access to a machine with all the packages installed
+* 4 homeworks which you will have to defend ( in person (?) )
 
 
-&lt;div class="my-footer"&gt;&lt;span&gt;Most important link: https://konsolerr.github.io/gene_expression_2019/&lt;/span&gt;&lt;/div&gt; 
+&lt;div class="my-footer"&gt;&lt;span&gt;TODO&lt;/span&gt;&lt;/div&gt; 
 ---
 
 ## About the course: syllabus
@@ -85,7 +73,7 @@ Most important link: https://konsolerr.github.io/gene_expression_2019/
 
 ]
 
-&lt;div class="my-footer"&gt;&lt;span&gt;Most important link: https://konsolerr.github.io/gene_expression_2019/&lt;/span&gt;&lt;/div&gt; 
+&lt;div class="my-footer"&gt;&lt;span&gt;TODO&lt;/span&gt;&lt;/div&gt; 
 ---
 
 class: center, middle
@@ -120,11 +108,11 @@ class: center, middle
 * Measuring RNA abundance is **much easier**
 
 
-* Given several conditions and a gene: for &lt;strong class='red'&gt;the same gene&lt;/strong&gt; fold change in RNA abundance will inform us aboust fold change in protein level
+* Given several conditions and a gene: for &lt;strong class='red'&gt;the same gene&lt;/strong&gt; fold change in RNA abundance will inform us about fold change in protein level
 ---
 ## Structure of mRNA
 
-* We are mostly interested in mRNA (messgenger RNA), because it is protein coding RNA
+* We are mostly interested in mRNA (messenger RNA), because it is protein coding RNA
 * Estimated 10&lt;sup&gt;5&lt;/sup&gt; to 10&lt;sup&gt;6&lt;/sup&gt; mRNA molecules per animal cell with high dynamic range for genes: from several copies to 10&lt;sup&gt;4&lt;/sup&gt;
 
 &lt;div class="my-footer"&gt;&lt;span&gt;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3129258/
@@ -138,7 +126,7 @@ class: center, middle
 * rRNA - ribosomal RNA: 80% of total cell RNA
 * tRNA - transfer RNA: 15% of the cell RNA
 * mRNA - messenger RNA for protein-coding genes
-* Orther RNAs: miRNA, lncRNA
+* Others RNAs: miRNA, lncRNA
 
 ---
 ## Strategies to capture RNA
@@ -259,7 +247,7 @@ We say that gene is differentially expressed, when they have different average e
 
 
 * Previous example was about gene expression on a **gene level**
-* We can go to **transcript level** and detect differnt isoforms
+* We can go to **transcript level** and detect different isoforms
 
 ---
 
@@ -328,7 +316,7 @@ class: center, middle
 ## What else
 
 * Mouse and human (I mostly work with) are very well annotated
-* What if the organism of intereset is not well-studied?
+* What if the organism of interest is not well-studied?
 
 ---
 
@@ -344,7 +332,7 @@ class: center, middle
 
 * RNA-Seq Assembly is an identification of all expressed isoforms from RNA-seq
 * Reference-guided Transcriptome assembly
-* De nove RNA-seq Assembly
+* De novo RNA-seq Assembly
 
 ---
 
@@ -392,8 +380,6 @@ class: center, middle
 class: center, middle
 
 # Single-cell technologies
-
-## Spoiler alert: I can talk about this for **days**
 
 ---
 
@@ -452,7 +438,7 @@ class: center, middle
 
 * Performed scRNA-seq on myeloid blood cells
 * Compared existed classification with their findings
-* Inentified new subsets
+* Identified new subsets
 
 ]
 
@@ -466,14 +452,78 @@ class: center, middle
 
 class: center, middle
 
-# Endnotes
+# Structure of the course
 
+---
+
+## Day 1: Transcription and regulation of transcription
+
+* **Alexander Tkachenko** will walk you through transcription and remind you the biology behind transcription and how transcription can be regulated.
+
+---
+
+## Day 2: Microarray and gene expression studies
+
+* Microarrays and how they measure RNA abundance
+* You will be introduced to basic concepts and ideas in gene expression studies
+* Secondary analysis of gene expression datasets
+* **Homework 1**: Analysis of microarray dataset
+
+---
+
+## Day 3: RNA-seq
+
+* Sequencing of RNA
+* Alignment / quantification
+* Normalization and differential expression
+* **Homework 2**: Alignment and quantification of RNA-seq dataset with further downstream analysis
+
+---
+
+## Day 4: Different topics
+
+* Non-model species: transcriptome assembly
+* Gene expression deconvolution
+* Experimental design of RNA-seq studies
+* **Homework 3**: Transcriptome assembly
+---
+
+## Day 5: Single-cell transcriptomics
+
+* Single-cell RNA-seq
+* Methods in scRNA-seq
+* Visual data analysis
+* **Homework 4**: Analysis of scRNA-seq dataset
 ---
 
 ## Why this way?
 
-* We will cover things mostaly in chronological order
+* We will cover things mostly in chronological order
 * Basic models and frameworks will get more complicated as we get through
+
+---
+
+## Grading the course
+
+Homeworks (during this week):
+
+* 4 homeworks (50 points)
+
+Examination is somewhere in May:
+
+* Dataset processing as a part of examination (25 points)
+* Oral examination (25 points)
+
+---
+
+## Grading the course
+
+
+* \&gt;= 50 is E (all homeworks will give you E)
+* \&gt;= 60 is D 
+* \&gt;= 70 is C 
+* \&gt;= 80 is B 
+* \&gt;= 90 is A (that's where you aim)
 
 ---
 
