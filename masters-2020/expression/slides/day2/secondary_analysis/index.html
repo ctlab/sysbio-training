@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Secondary analysis</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Kontantin Zaitsev" />
+    <link rel="stylesheet" href="../libs/itmo.css" type="text/css" />
+    <link rel="stylesheet" href="../libs/itmo-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Secondary analysis
+## in gene expression studies
+### Kontantin Zaitsev
+### October 9th<sup>th</sup>, 2019
+
+---
+
+
+class: center, middle
+
+# Secondary analysis
+
+---
+
+## Getting an expression matrix
+
+* Assume bulk gene expression
+* Microarray: itensities -&gt; probe/gene symbol mapping -&gt; gene expression matrix
+* RNA-seq: raw reads -&gt; alignments -&gt; quantification -&gt; gene expression matrix
+
+---
+
+## Gene expression matrix
+
+* Rows are genes
+* Columns are samples
+* We assume columns to be somewhat normalized, so gene expression levels are representative across all samples
+
+```
+        GSM3703675 GSM3703676 GSM3703677 GSM3703678 GSM3703679 GSM3703680 GSM3703681 GSM3703682
+Dhx36     6.868925   7.802883   7.265303   7.711423   7.925366   8.064470   7.782933   7.878214
+Arl6ip4   8.610726   8.349129   8.961090   8.863572   8.210400   8.298973   8.612580   8.380108
+Tram1     8.117650   7.725020   9.782122   9.205673   8.632618   8.403167  10.311316   9.872407
+Mir425    4.124838   4.674299   5.128062   4.936080   4.404071   4.785895   4.397090   4.670425
+Pex6      8.295669   8.071793   7.823910   8.110941   7.758333   7.989627   7.529114   7.686020
+Nans      8.768137   8.620869   9.358366   9.096089   8.752107   8.696490   9.641165   9.123614
+...
+```
+
+---
+
+## Once we have an expression matrix
+
+
+Conceptual analysis steps are the same:
+
+* **Quality controls: PCA + outlier/batch removal if needed**
+* Differential expression design
+* Performing differential expression
+* DE genes: looking for possible biological pathways, transcriptional factors, regulators...
+
+---
+
+## Sources of variance
+
+It is important to identify sources of gene expression variance
+
+* Variation included by design: cell type, treatment, cases vs controls
+* Biological sources of variation: cell cycle, sex of mice/donor, cell types present in the sample
+* Unwanted variaton: batch effect, donor effect
+* Technical variation: microarray variation, sequencing variation
+
+---
+
+## libraries
+
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("pheatmap", quietly = TRUE)) install.packages("pheatmap")
+if (!requireNamespace("RColorBrewer", quietly = TRUE)) install.packages("RColorBrewer")
+if (!requireNamespace("ggrepel", quietly = TRUE)) install.packages("ggrepel")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+
+if (!requireNamespace("limma", quietly = TRUE)) BiocManager::install("limma")
+if (!requireNamespace("Biobase", quietly = TRUE)) BiocManager::install("Biobase")
+if (!requireNamespace("sva", quietly = TRUE)) BiocManager::install("sva")
+```
+
+```
+## Warning: replacing previous import 'BiocGenerics::dims' by 'Biobase::dims'
+## when loading 'AnnotationDbi'
+```
+
+```r
+if (!requireNamespace("fgsea", quietly = TRUE)) BiocManager::install("fgsea")
+```
+
+
+---
+
+## Understanding variance
+
+
+```r
+library(Biobase)
+library(limma)
+library(sva)
+library(ggplot2)
+library(pheatmap)
+library(RColorBrewer)
+library(ggrepel)
+library(dplyr)
+library(fgsea)
+
+blueWhiteRed &lt;- colorRampPalette(c("#3859A8", "#EEEEEE", "#EE2930"))(10)
+
+load("gse129260.Rdata")
+```
+---
+
+## Understanding variance
+
+
+```r
+head(exprs(gse129260))
+```
+
+```
+##        GSM3703675 GSM3703676 GSM3703677 GSM3703678 GSM3703679 GSM3703680
+## Rps29    13.76204   13.83782   13.72959   13.76204   13.97115   13.76204
+## Rpl37a   13.54983   13.70194   13.64128   13.64128   13.72959   13.79243
+## Rplp2    13.62928   13.68329   13.65993   13.68329   13.65993   13.68329
+## Tpt1     13.64128   13.65993   13.59760   13.62928   13.76204   13.65993
+## Rpl41    13.53492   13.50823   13.61335   13.56125   13.52919   13.54983
+## Eef1a1   13.68329   13.66878   13.46390   13.54537   13.53492   13.58597
+##        GSM3703681 GSM3703682
+## Rps29    13.68329   13.76204
+## Rpl37a   13.72959   13.79243
+## Rplp2    13.65993   13.65993
+## Tpt1     13.64128   13.62928
+## Rpl41    13.59760   13.64128
+## Eef1a1   13.49293   13.47191
+```
+---
+
+
+## Understanding variance
+
+
+```r
+someGenes &lt;- exprs(gse129260)[c("Actb", "Ddx3y", "Il10"), ]
+plotData &lt;- t(someGenes)
+plotData &lt;- as.data.frame(plotData)
+plotData &lt;- cbind(plotData, pData(gse129260))
+
+head(plotData, 4)
+```
+
+```
+##                Actb    Ddx3y      Il10                              Cell
+## GSM3703675 13.47191 7.674220 12.655218 cell type: IL-10 positive B cells
+## GSM3703676 13.45945 6.702041  9.000712 cell type: IL-10 negative B cells
+## GSM3703677 13.27625 7.122010 11.919731 cell type: IL-10 positive B cells
+## GSM3703678 13.48798 6.043041  9.508046 cell type: IL-10 negative B cells
+##                         Treatment Replicate
+## GSM3703675 stimulation: anti-CD40      rep1
+## GSM3703676 stimulation: anti-CD40      rep1
+## GSM3703677       stimulation: LPS      rep1
+## GSM3703678       stimulation: LPS      rep1
+```
+---
+
+## Understanding variance
+
+
+```r
+ggplot(plotData, aes(y=Actb)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Cell, y=Actb)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Replicate, y=Actb)) +
+  geom_boxplot() + theme_bw()
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-5-1.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-5-2.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-5-3.svg)
+---
+
+## Understanding variance
+
+
+```r
+ggplot(plotData, aes(y=Il10)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Cell, y=Il10)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Replicate, y=Il10)) +
+  geom_boxplot() + theme_bw()
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-6-1.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-6-2.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-6-3.svg)
+---
+
+## Understanding variance
+
+
+```r
+ggplot(plotData, aes(y=Ddx3y)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Cell, y=Ddx3y)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Replicate, y=Ddx3y)) +
+  geom_boxplot() + theme_bw()
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-7-1.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-7-2.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-7-3.svg)
+---
+
+## Heatmaps:
+
+In gene set expression studies we usually use heatmaps to visualize expression levels:
+
+
+```r
+pheatmap(someGenes, scale="row", color=blueWhiteRed, annotation_col = pData(gse129260), cluster_cols = F)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-8-1.svg)&lt;!-- --&gt;
+
+---
+
+## Heatmaps: clustered
+
+
+```r
+pheatmap(exprs(gse129260), scale="row", color=blueWhiteRed, border_color = NA, kmeans_k = 8,
+         annotation_col = pData(gse129260), cluster_cols = F)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-9-1.svg)&lt;!-- --&gt;
+
+---
+
+## PCA: exploring the variance
+
+PCA (principal compononent analysis):
+
+* PCA puts samples in new space
+* Principal components (new coordinates) explain as much variance as possible in original space
+* Samples in original space are far from each other if a lot of genes are differentially expressed between them
+
+
+---
+
+## PCA: exploring the variance
+
+.center[
+&lt;img src="http://www.nlpca.org/fig_pca_principal_component_analysis.png" /&gt;
+]
+
+
+---
+
+## PCA: exploring the variance
+
+
+```r
+pcas &lt;- prcomp(t(exprs(gse129260)), scale. = T)
+plotData &lt;- cbind(pcas$x[, 1:2], pData(gse129260))
+```
+
+---
+
+## PCA: exploring the variance
+
+
+```r
+ggplot(plotData, aes(x=PC1, y=PC2, color=Cell, shape=Treatment)) +
+  geom_point() + theme_bw() + theme(aspect.ratio = 1)
+ggplot(plotData, aes(x=PC1, y=PC2, color=Replicate, shape=Treatment)) +
+  geom_point() + theme_bw() + theme(aspect.ratio = 1)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-11-1.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-11-2.svg)
+
+---
+
+## PCA: exploring the variance
+
+
+```r
+rotation &lt;- pcas$rotation
+PC1GenesDown &lt;- head(rownames(rotation[order(rotation[, 1]), ]), 10)
+PC1GenesUp &lt;- tail(rownames(rotation[order(rotation[, 1]), ]), 10)
+print(PC1GenesDown)
+```
+
+```
+##  [1] "Usp37"         "Kifc3"         "Pprc1"         "Mbtd1"        
+##  [5] "Tnfrsf12a"     "D130017N08Rik" "Ubap2l"        "Nupl1"        
+##  [9] "Med23"         "Trim44"
+```
+
+```r
+print(PC1GenesUp)
+```
+
+```
+##  [1] "Zyg11b"    "Atp6v1a"   "Fbxo22"    "Pqbp1"     "Slc25a16" 
+##  [6] "Gabarapl2" "Fam134b"   "Churc1"    "Zfp758"    "Spata6"
+```
+
+---
+
+## Heatmaps: PC1 genes
+
+
+```r
+pheatmap(exprs(gse129260)[c(PC1GenesDown, PC1GenesUp), ], 
+         scale="row", color=blueWhiteRed, border_color = NA,
+         annotation_col = pData(gse129260), cluster_cols = F)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-13-1.svg)&lt;!-- --&gt;
+
+---
+
+## PCA: exploring the variance
+
+
+```r
+rotation &lt;- pcas$rotation
+PC2GenesDown &lt;- head(rownames(rotation[order(rotation[, 2]), ]), 10)
+PC2GenesUp &lt;- tail(rownames(rotation[order(rotation[, 2]), ]), 10)
+print(PC2GenesDown)
+```
+
+```
+##  [1] "Xrcc1"   "Abca7"   "Mut"     "S100a10" "Gars"    "Scarb1"  "Zfand2b"
+##  [8] "Bud31"   "Ccdc107" "Srsf9"
+```
+
+```r
+print(PC2GenesUp)
+```
+
+```
+##  [1] "Epsti1"    "Pdcd10"    "Fbxw8"     "Dnajb6"    "Gm6377"   
+##  [6] "Slfn5"     "Ddx10"     "Nipsnap3b" "Pphln1"    "Cenpq"
+```
+
+---
+
+## Heatmaps: PC2 genes
+
+
+```r
+pheatmap(exprs(gse129260)[c(PC2GenesDown, PC2GenesUp), ], 
+         scale="row", color=blueWhiteRed, border_color = NA,
+         annotation_col = pData(gse129260), cluster_cols = F)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-15-1.svg)&lt;!-- --&gt;
+
+
+---
+
+## Can we remove unwanted sources of variance ?
+
+In our experiment we wanted to get variance from Treatment + Cell type
+
+* Can we identify sources of unwanted variance?
+* If we know source of variance, can we remove it?
+
+---
+
+## Batch correction: ComBat from SVA
+
+SVA package:
+
+* Allows to identify latent variables
+* Allows to remove unwanted variance (ComBat)
+* "Adjusting batch effects in microarray expression data using empirical Bayes methods"
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Original paper here https://academic.oup.com/biostatistics/article/8/1/118/252073&lt;/span&gt;&lt;/div&gt;
+
+---
+
+## Batch correction: ComBat
+
+
+```r
+batch &lt;- pData(gse129260)$Replicate
+modcombat &lt;- model.matrix(~1, data=pData(gse129260))
+combat_gse129260 = ComBat(dat=exprs(gse129260), batch=batch, mod=modcombat)
+```
+
+```
+## Found2batches
+```
+
+```
+## Adjusting for0covariate(s) or covariate level(s)
+```
+
+```
+## Standardizing Data across genes
+```
+
+```
+## Fitting L/S model and finding priors
+```
+
+```
+## Finding parametric adjustments
+```
+
+```
+## Adjusting the Data
+```
+
+---
+
+## Batch correction: ComBat
+
+
+```r
+pcas &lt;- prcomp(t(combat_gse129260), scale. = T)
+plotData &lt;- cbind(pcas$x[, 1:2], pData(gse129260))
+ggplot(plotData, aes(x=PC1, y=PC2, color=Cell, shape=Treatment)) +
+  geom_point() + theme_bw() + theme(aspect.ratio = 1)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-17-1.svg)&lt;!-- --&gt;
+
+---
+## ComBat: removes batch variance
+
+
+```r
+someGenes &lt;- combat_gse129260[c("Actb", "Ddx3y", "Il10"), ]
+plotData &lt;- t(someGenes)
+plotData &lt;- as.data.frame(plotData)
+plotData &lt;- cbind(plotData, pData(gse129260))
+
+head(plotData)
+```
+
+```
+##                Actb    Ddx3y      Il10                              Cell
+## GSM3703675 13.56253 5.660009 12.108932 cell type: IL-10 positive B cells
+## GSM3703676 13.55294 5.001689  9.132109 cell type: IL-10 negative B cells
+## GSM3703677 13.41205 5.286075 11.509832 cell type: IL-10 positive B cells
+## GSM3703678 13.57488 4.555441  9.545364 cell type: IL-10 negative B cells
+## GSM3703679 13.59598 4.334017 12.307073 cell type: IL-10 positive B cells
+## GSM3703680 13.62604 4.532145  8.903688 cell type: IL-10 negative B cells
+##                         Treatment Replicate
+## GSM3703675 stimulation: anti-CD40      rep1
+## GSM3703676 stimulation: anti-CD40      rep1
+## GSM3703677       stimulation: LPS      rep1
+## GSM3703678       stimulation: LPS      rep1
+## GSM3703679 stimulation: anti-CD40      rep2
+## GSM3703680 stimulation: anti-CD40      rep2
+```
+---
+
+## ComBat: removes batch variance
+
+
+```r
+ggplot(plotData, aes(y=Actb)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Cell, y=Actb)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Replicate, y=Actb)) +
+  geom_boxplot() + theme_bw()
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-19-1.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-19-2.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-19-3.svg)
+---
+
+## ComBat: removes batch variance
+
+
+```r
+ggplot(plotData, aes(y=Il10)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Cell, y=Il10)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Replicate, y=Il10)) +
+  geom_boxplot() + theme_bw()
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-20-1.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-20-2.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-20-3.svg)
+---
+
+## ComBat: removes batch variance
+
+
+```r
+ggplot(plotData, aes(y=Ddx3y)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Cell, y=Ddx3y)) +
+  geom_boxplot() + theme_bw()
+ggplot(plotData, aes(x=Replicate, y=Ddx3y)) +
+  geom_boxplot() + theme_bw()
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-21-1.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-21-2.svg)![](secondary_analysis_files/figure-html/unnamed-chunk-21-3.svg)
+---
+
+## Variance
+
+* Varince in transcriptional data comes from both signal and noise
+* In ideal scenario the only source of variance is included by your experimental design
+* In reality: batch effect, donor effect (super common for human data)
+* We can remove unwanted sources of variance if they introduce too much variance
+
+---
+## Once we have an expression matrix
+
+
+Conceptual analysis steps are the same:
+
+* Quality controls: PCA + outlier/batch removal if needed
+* **Differential expression design**
+* Performing differential expression
+* DE genes: looking for possible biological pathways, transcriptional factors, regulators...
+
+---
+
+## Linear models
+
+The most simple linear models are:
+
+$$ y = kx + b $$
+
+* We know both `\(y\)` and `\(x\)` and we try to predict `\(k\)` and `\(b\)`
+* Usually both `\(x\)` and `\(y\)` are numeric
+
+---
+
+## Linear models: x can be factor
+
+Let's look at expression of gene Il10
+
+
+&lt;a href="https://www.codecogs.com/eqnedit.php?latex=\LARGE&amp;space;y&amp;space;=&amp;space;k_{pos}&amp;space;x_{pos}&amp;space;&amp;plus;&amp;space;k_{neg}&amp;space;x_{neg}" target="_blank"&gt;&lt;img src="https://latex.codecogs.com/svg.latex?\LARGE&amp;space;y&amp;space;=&amp;space;k_{pos}&amp;space;x_{pos}&amp;space;&amp;plus;&amp;space;k_{neg}&amp;space;x_{neg}" title="\LARGE y = k_{pos} x_{pos} + k_{neg} x_{neg}" /&gt;&lt;/a&gt;
+
+where 
+* `\(x_{pos} = 1\)` and `\(x_{neg} = 0\)` if sample is *Il10*-positive 
+* `\(x_{pos} = 0\)` and `\(x_{neg} = 1\)` if sample is *Il10*-negative.
+
+---
+
+## Linear models: 
+
+
+```r
+model_simple &lt;- model.matrix(~0 + Cell, data = pData(gse129260))
+colnames(model_simple) &lt;- c("Negative", "Positive")
+model_simple
+```
+
+```
+##            Negative Positive
+## GSM3703675        0        1
+## GSM3703676        1        0
+## GSM3703677        0        1
+## GSM3703678        1        0
+## GSM3703679        0        1
+## GSM3703680        1        0
+## GSM3703681        0        1
+## GSM3703682        1        0
+## attr(,"assign")
+## [1] 1 1
+## attr(,"contrasts")
+## attr(,"contrasts")$Cell
+## [1] "contr.treatment"
+```
+
+---
+
+## Linear models: 
+
+
+```r
+exprs(gse129260)["Il10", ]
+```
+
+```
+## GSM3703675 GSM3703676 GSM3703677 GSM3703678 GSM3703679 GSM3703680 
+##  12.655218   9.000712  11.919731   9.508046  12.107867   8.721228 
+## GSM3703681 GSM3703682 
+##  11.585481   9.483412
+```
+
+```r
+linear_fit &lt;- lm.fit(model_simple, exprs(gse129260)["Il10", ])
+linear_fit$coef
+```
+
+```
+##  Negative  Positive 
+##  9.178349 12.067074
+```
+
+---
+
+## Linear models: 
+
+We can model expression of Il10 gene as:
+
+$ Il10 = 9.178349 $ if sample is Il10 negative
+
+$ Il10 = 12.067074 $ if sample is Il10 positive
+
+---
+
+## More complicated linear models
+
+* Il10 can be well-modeled with single factor variable
+* Let's look at S100a10 gene
+
+
+```r
+pheatmap(exprs(gse129260)[c("Il10", "S100a10"), ], scale="row", cluster_cols = F, cluster_rows = F, color=blueWhiteRed, annotation_col = pData(gse129260))
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-24-1.svg)&lt;!-- --&gt;
+
+---
+
+## Linear models: Treatment
+
+
+```r
+treatment_model &lt;- model.matrix(~0 + Treatment, data = pData(gse129260))
+colnames(treatment_model) &lt;- c("aCD-40", "LPS")
+treatment_model
+```
+
+```
+##            aCD-40 LPS
+## GSM3703675      1   0
+## GSM3703676      1   0
+## GSM3703677      0   1
+## GSM3703678      0   1
+## GSM3703679      1   0
+## GSM3703680      1   0
+## GSM3703681      0   1
+## GSM3703682      0   1
+## attr(,"assign")
+## [1] 1 1
+## attr(,"contrasts")
+## attr(,"contrasts")$Treatment
+## [1] "contr.treatment"
+```
+
+---
+
+## Linear models: Treatment + Replicate
+
+
+```r
+treatment_rep_model &lt;- model.matrix(~0 + Treatment + Replicate, data = pData(gse129260))
+colnames(treatment_rep_model) &lt;- c("aCD-40", "LPS", "Rep2")
+treatment_rep_model
+```
+
+```
+##            aCD-40 LPS Rep2
+## GSM3703675      1   0    0
+## GSM3703676      1   0    0
+## GSM3703677      0   1    0
+## GSM3703678      0   1    0
+## GSM3703679      1   0    1
+## GSM3703680      1   0    1
+## GSM3703681      0   1    1
+## GSM3703682      0   1    1
+## attr(,"assign")
+## [1] 1 1 2
+## attr(,"contrasts")
+## attr(,"contrasts")$Treatment
+## [1] "contr.treatment"
+## 
+## attr(,"contrasts")$Replicate
+## [1] "contr.treatment"
+```
+
+---
+
+## Linear models: 
+
+
+```r
+exprs(gse129260)["S100a10", ]
+```
+
+```
+## GSM3703675 GSM3703676 GSM3703677 GSM3703678 GSM3703679 GSM3703680 
+##   9.514830   9.427012  10.549706  10.256628   8.977444   9.178550 
+## GSM3703681 GSM3703682 
+##   9.569274   9.572045
+```
+
+```r
+linear_fit &lt;- lm.fit(treatment_rep_model, exprs(gse129260)["S100a10", ])
+linear_fit$coef
+```
+
+```
+##    aCD-40       LPS      Rep2 
+##  9.580817 10.293271 -0.612716
+```
+
+---
+
+## Linear models: Treatment + Replicate
+
+* Including several variables in the design allows us to calculate effects for each variable
+* First variable is usually a target for differential expression
+* Only the first variable will have both 0/1 effect calculated
+
+---
+
+## Linear models: full model
+
+
+```r
+full_model &lt;- model.matrix(~0 + Treatment + Cell + Replicate, data = pData(gse129260))
+colnames(full_model) &lt;- c("aCD-40", "LPS", "Il10pos", "Rep2")
+full_model
+```
+
+```
+##            aCD-40 LPS Il10pos Rep2
+## GSM3703675      1   0       1    0
+## GSM3703676      1   0       0    0
+## GSM3703677      0   1       1    0
+## GSM3703678      0   1       0    0
+## GSM3703679      1   0       1    1
+## GSM3703680      1   0       0    1
+## GSM3703681      0   1       1    1
+## GSM3703682      0   1       0    1
+## attr(,"assign")
+## [1] 1 1 2 3
+## attr(,"contrasts")
+## attr(,"contrasts")$Treatment
+## [1] "contr.treatment"
+## 
+## attr(,"contrasts")$Cell
+## [1] "contr.treatment"
+## 
+## attr(,"contrasts")$Replicate
+## [1] "contr.treatment"
+```
+
+---
+
+## Linear models: full model
+
+
+```r
+linear_fit &lt;- lm.fit(full_model, exprs(gse129260)["Il10", ])
+linear_fit$coef
+```
+
+```
+##     aCD-40        LPS    Il10pos       Rep2 
+##  9.3251086  9.3280201  2.8887248 -0.2964297
+```
+
+```r
+linear_fit &lt;- lm.fit(full_model, exprs(gse129260)["S100a10", ])
+linear_fit$coef
+```
+
+```
+##     aCD-40        LPS    Il10pos       Rep2 
+##  9.5586898 10.2711438  0.0442547 -0.6127160
+```
+
+---
+
+## Linear models: full model with 1
+
+
+```r
+full_model &lt;- model.matrix(~1 + Treatment + Cell + Replicate, data = pData(gse129260))
+colnames(full_model) &lt;- c("Intercept", "LPS", "Il10pos", "Rep2")
+full_model
+```
+
+```
+##            Intercept LPS Il10pos Rep2
+## GSM3703675         1   0       1    0
+## GSM3703676         1   0       0    0
+## GSM3703677         1   1       1    0
+## GSM3703678         1   1       0    0
+## GSM3703679         1   0       1    1
+## GSM3703680         1   0       0    1
+## GSM3703681         1   1       1    1
+## GSM3703682         1   1       0    1
+## attr(,"assign")
+## [1] 0 1 2 3
+## attr(,"contrasts")
+## attr(,"contrasts")$Treatment
+## [1] "contr.treatment"
+## 
+## attr(,"contrasts")$Cell
+## [1] "contr.treatment"
+## 
+## attr(,"contrasts")$Replicate
+## [1] "contr.treatment"
+```
+
+---
+
+## Linear models: full model with 1
+
+
+```r
+linear_fit &lt;- lm.fit(full_model, exprs(gse129260)["Il10", ])
+linear_fit$coef
+```
+
+```
+##    Intercept          LPS      Il10pos         Rep2 
+##  9.325108606  0.002911487  2.888724826 -0.296429707
+```
+
+```r
+linear_fit &lt;- lm.fit(full_model, exprs(gse129260)["S100a10", ])
+linear_fit$coef
+```
+
+```
+##  Intercept        LPS    Il10pos       Rep2 
+##  9.5586898  0.7124539  0.0442547 -0.6127160
+```
+
+---
+
+## Linear models
+
+* Linear models are usefull for calculating effects of variables
+* ` ~ 0 + Annotation1 + Annotation2 ... ` will calculate means for both factors in Annotation1, and calculate effects for other annotations (excluding Annotation1)
+* ` ~ 1 + Annotation1 + Annotation2 ... ` will calculate means for one the Annotation1 factors, and calculate effects for all annotations (including remaining factor in Annotation1)
+
+
+---
+
+## Once we have an expression matrix
+
+
+Conceptual analysis steps are the same:
+
+* Quality controls: PCA + outlier/batch removal if needed
+* Differential expression design
+* **Performing differential expression**
+* DE genes: looking for possible biological pathways, transcriptional factors, regulators...
+
+---
+
+## Performing DE (differential expression)
+
+* Performing DE is usually much easier than designing proper DE :)
+* We will use limma in this example
+* Let's check which design get more results
+
+
+---
+
+## Performing limma
+
+
+```r
+cell_full_model &lt;- model.matrix(~0 + Cell + Treatment + Replicate, data=pData(gse129260))
+colnames(cell_full_model) &lt;- c("il10neg", "il10pos", "LPS", "rep2")
+
+fit &lt;- lmFit(gse129260, cell_full_model)
+
+fit2 &lt;- contrasts.fit(fit, makeContrasts(il10pos - il10neg, levels=cell_full_model))
+fit2 &lt;- eBayes(fit2, trend = T)
+
+de &lt;- topTable(fit2, adjust.method="BH", number=Inf, sort.by = "P")
+```
+
+---
+
+## Differential expression
+
+
+```r
+head(de)
+```
+
+```
+##                    ID Gene.symbol Gene.ID mean_expression      logFC
+## Cd9        1416066_at         Cd9   12527        9.408102  1.2672152
+## Il10       1450330_at        Il10   16153       10.622712  2.8887248
+## Mzb1       1428947_at        Mzb1   69816       10.836028  0.9663412
+## Pon3       1419298_at        Pon3  269823        5.266634  1.5167428
+## Ighv14-2   1455530_at    Ighv14-2  668421        7.709365 -2.0150553
+## Mt1      1422557_s_at         Mt1   17748        9.510878  1.7284823
+##            AveExpr          t      P.Value   adj.P.Val        B
+## Cd9       9.408102  13.164815 3.503802e-07 0.002167242 6.623000
+## Il10     10.622712  12.644593 4.950996e-07 0.002167242 6.368938
+## Mzb1     10.836028  12.512033 5.418104e-07 0.002167242 6.301640
+## Pon3      5.266634  11.570981 1.054446e-06 0.002874045 5.791615
+## Ighv14-2  7.709365 -11.398509 1.197519e-06 0.002874045 5.691623
+## Mt1       9.510878   9.946067 3.758758e-06 0.006867570 4.758682
+```
+
+---
+
+## Volcano plot
+
+* Volcano plot is the usual way to display DE results
+* X axis is log fold change showing the direction of the change
+* Y axis is -log10(p adjusted) - showing the significane of DE
+
+
+---
+
+## DE: Volcano plot
+
+
+```r
+ggplot(de, aes(x=logFC, y=-log10(adj.P.Val), color=adj.P.Val &lt; 0.05)) +
+  geom_point() + theme_bw()
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-34-1.svg)&lt;!-- --&gt;
+
+---
+
+## DE: Volcano plot (fancy)
+
+
+```r
+ggplot(de, aes(x=logFC, y=-log10(adj.P.Val), color=adj.P.Val &lt; 0.05)) +
+  geom_point() + theme_bw() + scale_color_manual(values=c("black", "red")) +
+  geom_text_repel(data=de %&gt;% dplyr::filter(adj.P.Val &lt; 0.01), aes(label=Gene.symbol, color=NULL))
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-35-1.svg)&lt;!-- --&gt;
+
+---
+
+## Performing limma: bad model
+
+
+```r
+cell_bad_model &lt;- model.matrix(~0 + Cell, data=pData(gse129260))
+colnames(cell_bad_model) &lt;- c("il10neg", "il10pos")
+
+fit_bad &lt;- lmFit(gse129260, cell_bad_model)
+
+fit_bad2 &lt;- contrasts.fit(fit_bad, makeContrasts(il10pos - il10neg, levels=cell_bad_model))
+fit_bad2 &lt;- eBayes(fit_bad2, trend = T)
+
+de_bad &lt;- topTable(fit_bad2, adjust.method="BH", number=Inf, sort.by = "P")
+```
+
+---
+
+## Comparing results
+
+
+```r
+de %&gt;% filter(adj.P.Val &lt; 0.05) %&gt;% count()
+```
+
+```
+## # A tibble: 1 x 1
+##       n
+##   &lt;int&gt;
+## 1   124
+```
+
+```r
+de_bad %&gt;% filter(adj.P.Val &lt; 0.05) %&gt;% count()
+```
+
+```
+## # A tibble: 1 x 1
+##       n
+##   &lt;int&gt;
+## 1     1
+```
+
+---
+
+## Differential expression
+
+* Good design empowers you to find differences that you want to find in your data
+* Design with a smaller number of variables ignores additional information and assumes samples in a group to be the same
+* Design with a smaller number of variables is still something you might want to do
+
+---
+
+## Once we have an expression matrix
+
+
+Conceptual analysis steps are the same:
+
+* Quality controls: PCA + outlier/batch removal if needed
+* Differential expression design
+* Performing differential expression
+* **DE genes: looking for possible biological pathways, transcriptional factors, regulators...**
+
+---
+
+## Pathway enrichment: 
+
+* In most cases gene expression changes are not coming one gene by one
+* Genes that are changed are regulated by biological processes (pathways)
+* We have bunch of databases that describe gene sets: sets of genes that regulate or regulated by biological process
+* Technically speaking, for us pathway is just a set of genes
+
+---
+
+## Pathway enrichment: 
+
+* Pathways
+* GO terms
+* Targets of transcriptional factors
+* Gene sets produced by other datasets
+
+---
+
+## Pathway enrichment: 
+
+Let's didcuss terms firts:
+
+* Universe: genes that are expressed in the dataset (in our case size of the universe 12000):
+
+&lt;script type="math/tex; mode=display"&gt;
+						U = \{g_1, g_2, \dots, g_n\}, \ \  |U| = n \approx 12000
+&lt;/script&gt;
+
+* We have `\(N\)` pathways: 
+
+&lt;script type="math/tex; mode=display"&gt;
+						P_i = \{ g_{i, 1}, g_{i, 2}, \dots, g_{i, m_i} \} \\
+						|P_i| = m_i, \ \ \ g_{i, j} \in U
+&lt;/script&gt;
+
+
+---
+
+## Pathway enrichment:
+
+* We have results of our DE
+* "Pathway behaves non-random" = "Genes from pathways are not changing randomly"
+* We want to identify pathways that behave non-random in our DE results
+
+---
+
+## Simple implementation: exact Fisher test
+
+Exact Fisher test (or hypergeometric test)
+
+* We only choose significantly expressed genes
+* We test overlaps of these genes with pathway
+* Identify if overlap is random
+
+---
+
+## Loading kegg Pathways
+
+
+```r
+load("keggSymbolMouse.rdata")
+upRegulatedGenes &lt;- de %&gt;% filter(adj.P.Val &lt; 0.05 &amp; logFC &gt; 0) %&gt;% pull("Gene.symbol")
+length(upRegulatedGenes)
+```
+
+```
+## [1] 113
+```
+
+```r
+randomGeneSet &lt;- keggSymbolMouse[["Cardiac muscle contraction - Mus musculus (mouse)"]]
+randomGeneSet &lt;- randomGeneSet[randomGeneSet %in% rownames(de)]
+length(randomGeneSet)
+```
+
+```
+## [1] 41
+```
+
+```r
+length(intersect(randomGeneSet, upRegulatedGenes))
+```
+
+```
+## [1] 1
+```
+---
+
+## Hypergeometric test
+
+https://en.wikipedia.org/wiki/Hypergeometric_distribution
+
+* N = 12000: total number of genes (TOTAL)
+* K = 41: number of genes in pathway (SUCCESSES)
+* n = 113: number of DE genes (DRAWS)
+* k = 1: overlap (SUCCESSFUL DRAWS)
+
+Null hypothesis -- genes are drawn from 12000 genes at random with respect to the pathway
+
+---
+
+## Running hypergeometric test
+
+
+```r
+N &lt;- nrow(de)
+K &lt;- length(randomGeneSet)
+n &lt;- length(upRegulatedGenes)
+k &lt;- length(intersect(upRegulatedGenes, randomGeneSet))
+phyper(k - 1, K, N - K, n, lower.tail = F)
+```
+
+```
+## [1] 0.32197
+```
+---
+
+## Non-random set
+
+
+```r
+nonRandomGeneSet &lt;- keggSymbolMouse[["Cytokine-cytokine receptor interaction - Mus musculus (mouse)"]]
+nonRandomGeneSet &lt;- nonRandomGeneSet[nonRandomGeneSet %in% rownames(de)]
+
+
+N &lt;- nrow(de)
+K &lt;- length(nonRandomGeneSet)
+n &lt;- length(upRegulatedGenes)
+k &lt;- length(intersect(upRegulatedGenes, nonRandomGeneSet))
+print(c(N, K, n, k))
+```
+
+```
+## [1] 12000   135   113     7
+```
+
+```r
+phyper(k - 1, K, N - K, n, lower.tail = F)
+```
+
+```
+## [1] 0.000279903
+```
+
+---
+
+## Hypergeometric tests
+
+* Require you to define gene set to test:
+  * Setting arbitrary threshold (&lt; 0.01 or &lt; 0.05)
+  * Only work with decent amount of genes (hard to calculate overlaps for 20 genes)
+* Very robust with large number of genes
+* Many databases offer you hypergeometric test with FDR correction (multiple pathways tests)
+* http://software.broadinstitute.org/gsea/msigdb/annotate.jsp (you can enter my email for now: zayats1812@mail.ru)
+
+---
+
+## Hypergeometric tests
+
+* http://software.broadinstitute.org/gsea/msigdb/annotate.jsp (you can enter my email for now: zayats1812@mail.ru)
+
+
+```r
+cat(upRegulatedGenes)
+```
+
+```
+## Cd9 Il10 Mzb1 Pon3 Mt1 Tubb6 Smox Mmp10 Ikzf3 Pik3cg Prdm1 Cdkn2a Cdkn2b Nid1 Lysmd2 Mt2 Il6 Igkv6-14 Tmcc3 Igkv15-103 Iglv1 Igkv14-111 A130040M12Rik Nebl Pycard Cdk14 Rrbp1 Tpbg Slc7a7 Trib1 Eaf2 Ggta1 Mfhas1 3930401B19Rik Rbm47 Mbnl2 Ccl5 Igkv8-30 Fkbp11 Capn2 Lag3 Hspb1 Alpl Ptpn22 2010309G21Rik Cacna1e Srpk2 Gpr137b-ps Aig1 Bbc3 Wnt16 Trp53inp1 Glipr1 Jchain Il18 Entpd1 Ckb Mir22hg Herpud1 Asns Itm2b 1810046K07Rik Edem2 Tspan13 Irf4 Eif2ak3 Cttn Plxnd1 Serpine2 Hmces Cebpb Csf2rb Cdk2ap2 Igkv6-20 Sec11c Ets2 Selplg Irak2 Man1a Mcoln3 Sepp1 Tnfsf14 Tspo Cebpd Sowahc Map3k5 Crim1 Endou Slc39a4 Ccdc109b Cited2 Ctsl Hcst Sat1 Gpr31b Xbp1 Ryk Ebi3 Gm14005 Ell2 Ifnar2 Bag3 Cacna1s Cyp4f18 Fcgr2b Ggh Rgs10 Kat2b Fcer1g Mapkapk2 Wls Acpp Phlda1
+```
+
+---
+
+## GSEA (gene-set enrichment analysis)
+
+* GSEA uses information about all genes in DE to score pathways
+* Genes are ranked by their difference in DE (usually by t statistic)
+* We try to identify pathways for which genes are distributed at random
+
+---
+
+## GSEA (gene-set enrichment analysis)
+
+We will use fgsea package (the guys in our lab are amazing):
+
+
+```r
+stats &lt;- de$t
+names(stats) &lt;- de$Gene.symbol
+plotEnrichment(randomGeneSet, stats)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-42-1.svg)&lt;!-- --&gt;
+
+---
+
+## GSEA (gene-set enrichment analysis)
+
+
+
+```r
+plotEnrichment(nonRandomGeneSet, stats)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-43-1.svg)&lt;!-- --&gt;
+
+---
+
+## FGSEA
+
+* Based on enrichment score we can calculate p value for each pathway
+* fgsea allows us to do it quickly (f for FAST) for all the pathways in the same time
+
+---
+
+## FGSEA
+
+
+```r
+fgseaResults &lt;- fgseaMultilevel(keggSymbolMouse, stats, minSize = 15, maxSize = 500)
+head(fgseaResults, 3)
+```
+
+```
+##                                                                        pathway
+## 1:                                     ABC transporters - Mus musculus (mouse)
+## 2: AGE-RAGE signaling pathway in diabetic complications - Mus musculus (mouse)
+## 3:                               AMPK signaling pathway - Mus musculus (mouse)
+##           pval       padj    log2err        ES       NES size
+## 1: 0.152658662 0.23617193 0.14732415 0.4237276 1.2944282   25
+## 2: 0.003262936 0.01518781 0.43170770 0.4582477 1.6931981   66
+## 3: 0.941358025 0.94495099 0.03657978 0.1846762 0.7206455   91
+##                                    leadingEdge
+## 1:    Abcg1,Abcc1,Abca1,Abcb1b,Abca7,Abcd1,...
+## 2:          Il6,Prkcz,Foxo1,Pim1,Jak2,Ccl2,...
+## 3: Foxo1,Igf1r,Rab2a,Creb3l2,Cpt1a,Ppp2r5a,...
+```
+
+---
+
+## FGSEA
+
+
+```r
+topPathwaysUp &lt;- fgseaResults[ES &gt; 0, ][head(order(pval), n=5), pathway]
+topPathwaysDown &lt;- fgseaResults[ES &lt; 0, ][head(order(pval), n=5), pathway]
+topPathways &lt;- c(topPathwaysUp, rev(topPathwaysDown))
+```
+
+---
+
+## FGSEA
+
+
+```r
+plotGseaTable(keggSymbolMouse[topPathways], stats, fgseaResults, gseaParam = 0.5)
+```
+
+![](secondary_analysis_files/figure-html/unnamed-chunk-46-1.svg)&lt;!-- --&gt;
+
+---
+## FGSEA:
+
+* Does not require a priori threshold to define DE genes
+* Can detect a lot of small changes
+* Detects up/down pathways in the same time
+
+---
+
+## Conclusion
+
+Secondary analysis is about making sense of the data:
+* Making sense of the variance
+* Making sense of differential expression design
+* Making sense of differential expression results
+
+Once we have differential expression we can try to guess what's going on:
+* Biological pathways
+* TF targets
+
+---
+class: center, middle
+
+# Questions?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

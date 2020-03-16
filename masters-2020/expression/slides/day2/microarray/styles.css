@@ -1,0 +1,30 @@
+div.my-footer {
+    background-color: #272822;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    height: 20px;
+    width: 100%;
+}
+div.my-footer span {
+    font-size: 10pt;
+    color: #F7F8FA;
+    position: absolute;
+    left: 15px;
+    bottom: 2px;
+}
+
+.remark-slide-number {
+    bottom: 20px;
+    opacity: .5;
+    position: absolute;
+    right: 20px;
+}
+
+.remark-slide-content {
+    font-size: 24px;
+}
+
+li::before {
+  margin-top: 1em; /* Also needed for space (tweak if needed) */
+}

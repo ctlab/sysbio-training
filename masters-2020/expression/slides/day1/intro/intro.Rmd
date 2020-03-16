@@ -32,8 +32,9 @@ Authors of this course:
 
 * Course is scientific-oriented
 * By “gene expression” we almost always mean “RNA expression” if not said otherwise
+* Course will take place in Zoom
 
-Most important link: TODO
+Most important link: https://drive.google.com/drive/folders/1XvE5leRSwm1HEU6HP8MVAkkj48BobicD
 
 ---
 
@@ -45,7 +46,7 @@ Most important link: TODO
 * 4 homeworks which you will have to defend ( in person (?) )
 
 
-<div class="my-footer"><span>TODO</span></div> 
+<div class="my-footer"><span>https://drive.google.com/drive/folders/1XvE5leRSwm1HEU6HP8MVAkkj48BobicD</span></div> 
 ---
 
 ## About the course: syllabus
@@ -67,7 +68,7 @@ Most important link: TODO
 
 ]
 
-<div class="my-footer"><span>TODO</span></div> 
+<div class="my-footer"><span>https://drive.google.com/drive/folders/1XvE5leRSwm1HEU6HP8MVAkkj48BobicD</span></div> 
 ---
 
 class: center, middle
@@ -148,7 +149,7 @@ What can be a sample? RNA isolated from pretty much anywhere
 
 
 * Usually you have the phenotype, but you don't know why it happens
-* You take samples from several conditions related to you phenotype
+* You take samples from several conditions related to your phenotype
 * You try to figure out what is different in your phenotype from the control (or other condition)
 
 ---
@@ -172,7 +173,7 @@ What can be a sample? RNA isolated from pretty much anywhere
   <img src="es_title.png" width="400">
 ]
 
-"Most people infected with M. tuberculosis remain asymptomatic, termed latent TB, with a 10% lifetime risk of developing active TB disease. Current tests, however, cannot identify which individuals will develop disease 3 ."
+"Most people infected with M. tuberculosis remain asymptomatic, termed latent TB, with a 10% lifetime risk of developing active TB disease. Current tests, however, cannot identify which individuals will develop disease."
 
 <div class="my-footer"><span>Taken from https://www.nature.com/articles/nature09247</span></div> 
 
