@@ -73,9 +73,8 @@ ENV LD_LIBRARY_PATH /opt/conda/lib:${LD_LIBRARY_PATH}
 RUN mkdir -p /root/conda_envs
 COPY conda_envs /root/conda_envs
 
-# Bio utils, Python 2.7 with MACS2, SICER and snakemake
-RUN conda env create -q --name snakemake --file /root/conda_envs/snakemake.environment.yml
-RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml && \
+# Bio utils, Python 2.7 with MACS2, SICER
+RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml
 RUN conda clean -i -l -t -y && rm -rf /usr/local/src/*
 
 # Fix SICER paths
@@ -121,13 +120,13 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
 # Workaround for https://github.com/merenlab/anvio/issues/1479
 #RUN conda activate bio && conda install -c bioconda samtools=1.9 --force-reinstall
 
-# Install Homer genome package
-RUN perl configureHomer.pl -install hg19
-
 # expose default R-Studio port
 EXPOSE 8787
 # Launch as root to for correct authentification
 USER root
+
+# Install Homer genome package
+RUN perl /opt/conda/pkgs/homer-4.11-pl526hc9558a2_3/share/homer/configureHomer.pl -install hg19
 
 # TODO: workaround: conda env bio installs R 3.6.1, which overrides R 4.0.3 installed by apt-get
 RUN mv /opt/conda/envs/bio/bin/R /opt/conda/envs/bio/bin/R1 && \

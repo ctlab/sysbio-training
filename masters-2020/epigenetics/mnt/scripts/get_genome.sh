@@ -5,7 +5,7 @@
 # Stop exec on error.
 set -e
 
->&2 echo "index-genome $@"
+>&2 echo "get-genome $@"
 if [[ $# -lt 2 ]]; then
     echo "Need 2 parameters! <GENOME> <FOLDER>"
     exit 1
@@ -33,4 +33,4 @@ if [[ ! -f "${GENOME}.chrom.sizes" ]]; then
     chmod a+r *
 fi
 
->&2 echo "Done. index-genome $@"
+>&2 echo "Done. get-genome $@"

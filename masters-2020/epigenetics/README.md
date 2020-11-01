@@ -14,8 +14,12 @@ Build Docker Image
 docker build -t jbrepi .
 ```
 
+
+
 Launch instance
 ----------------------
+
+Append `/bin/bash` and check that all the tools are installed correctly with `check.sh` script. 
 ```
 docker run --rm --name student1 -m 16g --cpus=2 -p 8787:8787 -v <PATH>/mnt:/mnt:ro -t jbrepi
 ```
