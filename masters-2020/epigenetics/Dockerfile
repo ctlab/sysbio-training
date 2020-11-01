@@ -134,8 +134,8 @@ RUN mv /opt/conda/envs/bio/bin/R /opt/conda/envs/bio/bin/R1 && \
     mv /opt/conda/envs/bio/bin/Rscript /opt/conda/envs/bio/bin/Rscript1
 
 # Download all the data
-RUN wget https://artyomovlab.wustl.edu/publications/supp_materials/4Oleg/2020_ITMO_epigenetics_practice/mnt.tar.gz
-RUN tar xvf mnt.tar.gz
+RUN wget https://artyomovlab.wustl.edu/publications/supp_materials/4Oleg/2020_ITMO_epigenetics_practice/mnt.tar.gz && \
+ tar xvf mnt.tar.gz && rm mnt.tar.gz
 
 RUN cd /mnt && \
     wget https://github.com/broadinstitute/picard/releases/download/2.23.8/picard.jar && \
@@ -143,8 +143,6 @@ RUN cd /mnt && \
     wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.chrom.sizes && \
     wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/GRCh37_mapping/gencode.v30lift37.annotation.gtf.gz && \
     wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.fa.gz
-
-RUN rm mnt.tar.gz
 
 USER student
 RUN mkdir ~/data && for F in $(find /mnt/data/ -type f); do ln -s $F ~/data; done
