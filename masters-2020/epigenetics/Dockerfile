@@ -122,7 +122,8 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
 
 # expose default R-Studio port
 EXPOSE 8787
-# Launch as root to for correct authentification
+
+# Finish installation
 USER root
 
 # Install Homer genome package
@@ -132,4 +133,22 @@ RUN perl /opt/conda/pkgs/homer-4.11-pl526hc9558a2_3/share/homer/configureHomer.p
 RUN mv /opt/conda/envs/bio/bin/R /opt/conda/envs/bio/bin/R1 && \
     mv /opt/conda/envs/bio/bin/Rscript /opt/conda/envs/bio/bin/Rscript1
 
+# Download all the data
+RUN wget https://artyomovlab.wustl.edu/publications/supp_materials/4Oleg/2020_ITMO_epigenetics_practice/mnt.tar.gz
+RUN tar xvf mnt.tar.gz
+
+RUN cd /mnt && \
+    wget https://github.com/broadinstitute/picard/releases/download/2.23.8/picard.jar && \
+    wget https://download.jetbrains.com/biolabs/span/span-0.13.5244.jar && \
+    wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.chrom.sizes && \
+    wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/GRCh37_mapping/gencode.v30lift37.annotation.gtf.gz && \
+    wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.fa.gz
+
+RUN rm mnt.tar.gz
+
+USER student
+RUN mkdir ~/data && for F in $(find /mnt/data/ -type f); do ln -s $F ~/data; done
+
+# Launch as root to for correct authentification
+USER root
 CMD /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --server-app-armor-enabled=0
