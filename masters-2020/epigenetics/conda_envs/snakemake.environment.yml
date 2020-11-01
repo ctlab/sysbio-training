@@ -1,0 +1,9 @@
+name: snakemake
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.6
+  - cookiecutter=1.6.0
+  - pathlib=1.0.1
+  - snakemake=5.4.0
