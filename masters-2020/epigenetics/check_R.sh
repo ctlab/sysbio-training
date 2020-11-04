@@ -1,0 +1,7 @@
+library(ChIPpeakAnno)
+library(EnsDb.Hsapiens.v75)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(org.Hs.eg.db)
+library(reactome.db)
+library(ChIPseeker)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)

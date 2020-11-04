@@ -51,16 +51,6 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends 
     apt-get autoremove -y && \
     apt-get clean
 
-# R packages & # Hacks to configure missing packages for Chipseeker
-ENV CRAN_URL https://cloud.r-project.org/
-RUN R -e 'install.packages("BiocManager")' && \
-    R -e 'BiocManager::install("ChIPseeker", version = "3.12")' && \
-    R -e 'BiocManager::install("org.Hs.eg.db", version = "3.12")' && \
-    R -e 'install.packages("Matrix", repos = "http://cran.r-project.org")' && \
-    R -e 'install.packages("boot", repos = "http://cran.r-project.org")' && \
-    R -e 'install.packages("MASS", repos = "http://cran.r-project.org")' && \
-    R -e 'install.packages("KernSmooth", repos = "http://cran.r-project.org")'
-
 # Install conda
 RUN curl --location https://repo.continuum.io/miniconda/Miniconda2-4.6.14-Linux-x86_64.sh --output ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
@@ -75,6 +65,7 @@ COPY conda_envs /root/conda_envs
 
 # Bio utils, Python 2.7 with MACS2, SICER
 RUN conda env create -q --name bio --file /root/conda_envs/bio.environment.yml
+RUN conda env create -q --name snakemake --file /root/conda_envs/snakemake.environment.yml
 RUN conda clean -i -l -t -y && rm -rf /usr/local/src/*
 
 # Fix SICER paths
@@ -98,6 +89,7 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> /etc/profile && \
 # Add user and configure /opt/conda
 RUN useradd -G rstudio-server -m -d /home/student -s /bin/bash student && \
     echo student:sysbiopass | chpasswd && \
+    usermod -aG sudo student && \
     chown student:student /opt/conda
 
 
@@ -117,35 +109,48 @@ RUN echo 'PATH="/opt/conda/bin:${PATH}"' >> ~/.profile && \
 	echo "export LC_ALL=C.UTF-8" >> ~/.profile && \
     echo "export LANG=C.UTF-8" >> ~/.profile
 
-# Workaround for https://github.com/merenlab/anvio/issues/1479
-#RUN conda activate bio && conda install -c bioconda samtools=1.9 --force-reinstall
-
 # expose default R-Studio port
 EXPOSE 8787
 
 # Finish installation
 USER root
 
-# Install Homer genome package
-RUN perl /opt/conda/pkgs/homer-4.11-pl526hc9558a2_3/share/homer/configureHomer.pl -install hg19
-
 # TODO: workaround: conda env bio installs R 3.6.1, which overrides R 4.0.3 installed by apt-get
 RUN mv /opt/conda/envs/bio/bin/R /opt/conda/envs/bio/bin/R1 && \
     mv /opt/conda/envs/bio/bin/Rscript /opt/conda/envs/bio/bin/Rscript1
 
-# Download all the data
-RUN wget https://artyomovlab.wustl.edu/publications/supp_materials/4Oleg/2020_ITMO_epigenetics_practice/mnt.tar.gz && \
- tar xvf mnt.tar.gz && rm mnt.tar.gz
+## Download all the data
+#RUN wget https://artyomovlab.wustl.edu/publications/supp_materials/4Oleg/2020_ITMO_epigenetics_practice/mnt.tar.gz && \
+# tar xvf mnt.tar.gz && rm mnt.tar.gz
+#
+#RUN cd /mnt && \
+#    wget https://github.com/broadinstitute/picard/releases/download/2.23.8/picard.jar && \
+#    wget https://download.jetbrains.com/biolabs/span/span-0.13.5244.jar && \
+#    wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.chrom.sizes && \
+#    wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/GRCh37_mapping/gencode.v30lift37.annotation.gtf.gz && \
+#    wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.fa.gz
+#
 
-RUN cd /mnt && \
-    wget https://github.com/broadinstitute/picard/releases/download/2.23.8/picard.jar && \
-    wget https://download.jetbrains.com/biolabs/span/span-0.13.5244.jar && \
-    wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.chrom.sizes && \
-    wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/GRCh37_mapping/gencode.v30lift37.annotation.gtf.gz && \
-    wget http://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/hg19.fa.gz
-
+RUN mkdir -p /usr/local/lib/R/site-library && chmod a+rw /usr/local/lib/R/site-library
 USER student
-RUN mkdir ~/data && for F in $(find /mnt/data/ -type f); do ln -s $F ~/data; done
+
+# R packages
+ENV CRAN_URL https://cloud.r-project.org/
+RUN R -e 'install.packages("BiocManager")' && \
+    R -e 'BiocManager::install(c("ChIPseeker", "ChIPpeakAnno", "EnsDb.Hsapiens.v75", "ReactomePA", "UpSetR"), version = "3.12")' && \
+    R -e 'install.packages("Matrix", repos = "http://cran.r-project.org")' && \
+    R -e 'install.packages("boot", repos = "http://cran.r-project.org")' && \
+    R -e 'install.packages("MASS", repos = "http://cran.r-project.org")' && \
+    R -e 'install.packages("KernSmooth", repos = "http://cran.r-project.org")'
+
+# Install Homer genome package
+USER root
+RUN chmod -R a+rw /opt/conda/envs/bio/share/homer
+USER student
+RUN cd ~ && perl /opt/conda/envs/bio/share/homer/configureHomer.pl -keepScript -install hg19
+
+# Install missing package
+RUN R -e 'BiocManager::install("org.Hs.eg.db")'
 
 # Launch as root to for correct authentification
 USER root
