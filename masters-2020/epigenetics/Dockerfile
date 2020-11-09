@@ -152,6 +152,49 @@ RUN cd ~ && perl /opt/conda/envs/bio/share/homer/configureHomer.pl -keepScript -
 # Install missing package
 RUN R -e 'BiocManager::install("org.Hs.eg.db")'
 
+USER root
+# --------------------------------------------------------
+# Additional tools / libs for bioinformatics:
+#  GNU/GCC compiler and related tools (such as make, debugger, man pages) collection
+RUN apt-get update && apt-get install -y build-essential autoconf automake
+#
+# The GNU Scientific Library
+RUN apt-get update && apt-get install -y libgsl-dev
+#-----------
+# Install methpipe-3.4.3
+RUN mkdir -p /opt && cd /opt && \
+   wget http://smithlabresearch.org/downloads/methpipe-3.4.3.tar.bz2 && \
+   tar -xvf methpipe-3.4.3.tar.bz2  && \
+   cd methpipe-3.4.3 && \
+   make all && make install && \
+   rm -rf /opt/methpipe-3.4.3.tar.bz2
+
+# Install HTSlib: https://github.com/samtools/htslib
+RUN apt-get update && apt-get install -y perl zlib1g-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev
+#RUN apt-get update && apt-get install -ay libbz2-dev zlib1g-dev libncurses5-dev libncursesw5-dev liblzma-dev
+RUN cd /usr/bin && \
+    wget https://github.com/samtools/htslib/releases/download/1.11/htslib-1.11.tar.bz2 && \
+    tar -vxjf htslib-1.11.tar.bz2 && cd /usr/bin/htslib-1.11 && \
+    autoreconf && \
+    ./configure && make && make install && \
+    rm -rf /usr/bin/htslib-1.11
+#-----------
+# Installing methpipe-4.1.1
+# smithlab_cpp lib:
+RUN mkdir -p /opt && cd /opt && \
+   wget https://github.com/smithlabcode/smithlab_cpp/releases/download/1.0.2/libsmithlab_cpp-1.0.2.tar.gz && \
+   tar -xvf libsmithlab_cpp-1.0.2.tar.gz && \
+   cd libsmithlab_cpp-1.0.2 && \
+   ./configure --enable-hts && make && make install && \
+   rm -rf /opt/libsmithlab_cpp-1.0.2*
+# methpipe
+RUN mkdir -p /opt && cd /opt && \
+   wget https://github.com/smithlabcode/methpipe/releases/download/v4.1.1/methpipe-4.1.1.tar.gz && \
+   tar -zxvf methpipe-4.1.1.tar.gz && \
+   cd methpipe-4.1.1 && mkdir -p build && cd build && \
+   ../configure --prefix="$(dirname $(pwd))"  && make &&  make install && \
+   rm -rf /opt/methpipe-4.1.1.tar.g
+
 # Launch as root to for correct authentification
 USER root
 CMD /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --server-app-armor-enabled=0
