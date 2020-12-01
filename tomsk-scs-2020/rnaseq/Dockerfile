@@ -143,6 +143,10 @@ RUN mamba install -c bioconda seqtk
 # Using R from rstudio, not conda's
 RUN mamba remove --force r-base 
 
+# single-cell packages
+
+RUN R -e 'install.packages(c("ggplot2", "dplyr", "Seurat"))'
+RUN R -e 'BiocManager::install("MAST")'
 
 EXPOSE 8787
 
