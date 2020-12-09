@@ -1,2 +1,3 @@
 #!/bin/bash
-docker run --rm --name sb -d -p 8711:8787 -v /mnt/vol1/MED_GEN_DATA:/mnt -v /mnt/vol1/student00:/home/student -t sbw-medgenetics
+docker run --rm --name sb -d -p 8700:8787 -v /mnt/scs2020/students/student00:/home/student -v /mnt/scs2020/shared:/home/student/shared:ro -t tomsk-scs-2020-rnaseq 
+

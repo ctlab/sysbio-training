@@ -2,7 +2,7 @@
 
 # getting fastqs
 mkdir fastqs
-ln -sf /mnt/RNAseq/GSE120762/downsampled/*.fastq.gz fastqs/
+ln -sf ~/shared/RNAseq/GSE120762/downsampled/*.fastq.gz fastqs/
 
 # strting with only one sample
 TAG=SRR7956038
@@ -15,7 +15,7 @@ fastqc -o "$OUTDIR" "fastqs/${TAG}_1.fastq.gz" |& tee "$OUTDIR/${TAG}_1.fastqc.l
 
 ##### Step 3: alignment
 
-HISAT_IDX=/mnt/RNAseq/reference/Gencode_mouse/release_M20/GRCm38.primary_assembly
+HISAT_IDX=~/shared/RNAseq/reference/Gencode_mouse/release_M20/GRCm38.primary_assembly
 
 # aligning to the genome reference
 
@@ -52,15 +52,15 @@ bamCoverage -b "$OUTDIR/$TAG.bam" -o "$OUTDIR/$TAG.cov.bw" |& tee "$OUTDIR/$TAG.
 
 ##### Step 6: QC
 
-REFGENE_MODEL=/mnt/RNAseq/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
+REFGENE_MODEL=~/shared/RNAseq/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
 infer_experiment.py -i "$OUTDIR/$TAG.bam" \
   -r $REFGENE_MODEL | tee "$OUTDIR/$TAG.infer_experiment.txt"
 
-REFGENE_MODEL=/mnt/RNAseq/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
+REFGENE_MODEL=~/shared/RNAseq/reference/Gencode_mouse/release_M20/mm10_Gencode_VM18.bed
 read_distribution.py -i "$OUTDIR/$TAG.bam" \
   -r $REFGENE_MODEL | tee "$OUTDIR/$TAG.read_distribution.txt"
 
-# REFGENE_MODEL=/mnt/RNAseq/reference/Gencode_mouse/release_M20/mm10.HouseKeepingGenes.bed
+# REFGENE_MODEL=~/shared/RNAseq/reference/Gencode_mouse/release_M20/mm10.HouseKeepingGenes.bed
 # geneBody_coverage.py \
 #   -i $OUTDIR/$TAG.bam \
 #   -o $OUTDIR/$TAG \
@@ -68,7 +68,7 @@ read_distribution.py -i "$OUTDIR/$TAG.bam" \
   
 ##### Step 7: counting reads
 
-GTF=/mnt/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.gtf
+GTF=~/shared/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.annotation.gtf
 
 OUTDIR="featureCounts/$TAG"; mkdir -p "$OUTDIR"
 date
@@ -84,7 +84,7 @@ wc -l "$OUTDIR/$TAG.fc.txt"
 
 mkdir kallisto
 
-KALLISTO_IDX=/mnt/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.transcripts.kalliso.idx
+KALLISTO_IDX=~/shared/RNAseq/reference/Gencode_mouse/release_M20/gencode.vM20.transcripts.kalliso.idx
 
 OUTDIR="kallisto/$TAG"; mkdir -p "$OUTDIR"
 date

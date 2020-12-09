@@ -4,17 +4,25 @@ source("./functions.R")
 library(data.table)
 
 # load the featureCount files
-fc.files <- list.files("./featureCounts/", pattern="fc.txt$", recursive = TRUE, full.names = TRUE)
+# fc.files <- list.files("./featureCounts/", pattern="fc.txt$", recursive = TRUE, full.names = TRUE)
+fc.files <- list.files("~/shared/RNAseq/GSE120762/results_all/featureCounts/", pattern="fc.txt$", recursive = TRUE, full.names = TRUE)
 fc_res <- lapply(fc.files, fread)
 
 # compaile to a matrix
 fc_mat <- do.call(cbind, lapply(fc_res, function(x) x[[ncol(x)]]))
 rownames(fc_mat) <- fc_res[[1]][, Geneid]
+# remove Ensembl gene versions
+rownames(fc_mat) <- gsub("\\.\\d*$", "", rownames(fc_mat))
 tags <- sapply(fc.files, function (x) gsub(".fc.txt", "", basename(x), fixed=TRUE))
 colnames(fc_mat) <- tags
 
 head(fc_mat)
 tail(fc_mat)
+
+fc_mat_str <- rbind(c("", colnames(fc_mat)),
+                    c("condition", rep("Ctrl", 3), rep("LPS", 3)),
+                    cbind(rownames(fc_mat), fc_mat))
+write.table(fc_mat_str,file="counts.txt", quote=F, sep="\t", row.names = F, col.names = F)
 
 # Step 1: creating an ExpressionSet object
 
@@ -27,7 +35,7 @@ head(pData(es))
 head(fData(es))
 
 head(rownames(es))
-fData(es)$ensembl <- gsub("\\.\\d*$", "", rownames(es))
+fData(es)$ensembl <- rownames(es)
 
 library(org.Mm.eg.db)
 columns(org.Mm.eg.db)
@@ -40,6 +48,8 @@ head(fData(es))
 
 exprs(es)[which(fData(es)$symbol == "Actb"), ]
 exprs(es)[which(fData(es)$symbol == "Acod1"), ]
+
+write.gct(es, file="./es.gct")
 
 # Step 2: getting a quantile normalized file
 
@@ -83,7 +93,8 @@ plotPCA(vst)
 dir.create("./de/", showWarnings = F)
 unique(dds$condition)
 # log2FC = LPS - Ctrl
-de <- results(dds, contrast = c("condition", "LPS", "Ctrl"), cooksCutoff = F)
+res <- results(dds, contrast = c("condition", "LPS", "Ctrl"), cooksCutoff = F)
+de <- lfcShrink(dds, res=res, contrast = c("condition", "LPS", "Ctrl"))
 head(de)
 de <- data.table(ID=rownames(de), as.data.table(de))
 head(de)
