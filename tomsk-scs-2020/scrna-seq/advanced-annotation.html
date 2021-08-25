@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Advanced annotation</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Konstantin Zaitsev" />
+    <link rel="stylesheet" href="libs/itmo.css" type="text/css" />
+    <link rel="stylesheet" href="libs/itmo-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Advanced annotation
+### Konstantin Zaitsev
+### December 3<sup>rd</sup>, 2020. Tomsk / Saint-Petersburg
+
+---
+
+
+## Our setup
+
+* Address is the same https://ctlab.itmo.ru/rstudio-sbNN/
+* Folder scrna-seq
+* File advanced-annotation.R
+
+---
+## Lets first load the object
+
+
+```r
+library(Seurat)
+library(Matrix)
+library(MAST)
+library(ggplot2)
+library(dplyr)
+library(fgsea)
+
+seurat &lt;- readRDS("blood_seurat.rds")
+```
+
+---
+
+## Calculating averaged expression
+
+
+```r
+average &lt;- AverageExpression(seurat)$SCT
+averageLog &lt;- log2(as.matrix(average) + 1)
+colnames(averageLog) &lt;- paste0("Cluster ", colnames(average))
+write.table(averageLog, "average_log.tsv", sep="\t", col.names=NA, quote=F)
+```
+
+
+---
+
+## Phantasus
+
+* Phantasus that you used yesterday for bulk RNA-seq can be used for single-cell
+* We will look at averaged expression within the clusters
+* https://ctlab.itmo.ru/phantasus/
+
+Feedback is welcome!
+
+---
+## Lets do it
+
+* Download average_log.tsv -&gt; Open it in phantasus
+* More -&gt; Export
+
+.center[
+&lt;img src="phantasus_screen_shots/export.png" width="80%"&gt;
+]
+
+---
+## Lets do it
+
+* Download average_log.tsv -&gt; Open it in phantasus (https://ctlab.itmo.ru/phantasus/)
+* Open dataset -&gt; My computer -&gt; average_log.tsv
+
+.center[
+&lt;img src="phantasus_screen_shots/screen0.png" width="80%"&gt;
+]
+
+---
+## Lets open averaged table in phantasus
+
+.center[
+&lt;img src="phantasus_screen_shots/screen1.png" width="80%"&gt;
+]
+
+---
+
+## Tools -&gt; create calculated annotation
+
+.center[
+&lt;img src="phantasus_screen_shots/screen2.png" width="80%"&gt;
+]
+
+---
+
+## Tools -&gt; create calculated annotation
+
+.center[
+&lt;img src="phantasus_screen_shots/screen3.png" width="80%"&gt;
+]
+
+---
+
+## Filter out some genes
+
+* Lets filter genes by average expression
+* Tools -&gt; Filter (Add, field = gene_max, switch to top, amount = 2000, close)
+
+.center[
+&lt;img src="phantasus_screen_shots/screen4.png" width="80%"&gt;
+]
+
+---
+
+## Filtered matrix looks like this
+
+.center[
+&lt;img src="phantasus_screen_shots/screen5.png" width="80%"&gt;
+]
+
+---
+
+## Lets look at some immunological markers
+
+* Lets search for these genes: 
+CD19 CD79A CD79B CD14 CD3E GNLY PRF1 FCGR3A SELL CCR7 ITGAX ITGAM HLA-DRA CD8A CD8B CD4 PTPRC
+
+.center[
+&lt;img src="phantasus_screen_shots/screen6.png" width="60%"&gt;
+]
+
+---
+
+## Let's cluster
+
+* Then tools -&gt; clustering -&gt; hierarchical clustering -&gt; Cluster (columns)
+
+.center[
+&lt;img src="phantasus_screen_shots/screen7.png" width="60%"&gt;
+]
+
+---
+
+## Now we can tell "who is who"
+
+* You can adjust the height of the clustering 
+
+.center[
+&lt;img src="phantasus_screen_shots/screen8.png" width="60%"&gt;
+]
+
+---
+# Cell lineage defines similarity of clusters
+.tiny[.pull-left[
+* Clusters 2, 5 are CD14+ monocytes (based on CD14 expression), and cluster 13 are CD16 (FCGR3a expression). Cluster 2, 5 and 13 are from myeloid cell lineage (3 clusters on the left)
+* Clusters 6, 8 and 9 are B cell based on CD79 expression (3 clusters in the middle)
+* Clusters 0, 1, 3, 4, 7, 10, 11, 12 are T cells and NK cells (CD3 and cytotoxic markers)
+* Clusters 14 and 15 are some sort of outliers
+]]
+
+.pull-right[
+.center[
+&lt;img src="phantasus_screen_shots/screen8.png" width="70%"&gt;
+]
+]
+
+
+
+
+
+---
+
+## Saving heatmaps
+
+* Create new heatmap only of selected genes (Ctrl + X)
+* Saving heatmaps is a good thing
+* File -&gt; Save Image (Ctrl + S) -&gt; Choose Filename -&gt; Choose format (I prefer svg, svg can be open in browser) -&gt; hooray
+
+While this heatmap is not something you will necessarily put in the paper,
+but it is ok for supplement or any kind of presentation where you present
+single-cell RNA-seq data
+
+---
+
+## Differential expression
+
+.small[
+In bulk RNA-seq we compared groups of several samples (same cell type,
+same condition, same treatment) between each other. In single-cell RNA-seq we will compare cell groups against each other:
+
+* One cluster against the other
+* One cluster against all the other clusters (marker identification)
+* One condition against the other (almost bulk RNA-seq)
+* Same cell type in different conditions
+]
+
+
+---
+
+## Comparison of T cells
+
+* Based on the previous investigation we have 2 clusters of CD8 T cells: 3 and 11, which are close to each other
+* Lets figure out what’s the difference
+
+---
+## Comparison of T cells
+
+
+```r
+FeaturePlot(seurat, features=c("CD3D", "CD4", "CD8A", "PRF1"), ncol = 4)
+```
+
+![](advanced-annotation_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+---
+## Comparison of T cells
+
+
+```r
+VlnPlot(seurat, features=c("CD3D", "CD4", "CD8A", "PRF1"), ncol = 4, pt.size = 0.02)
+```
+
+![](advanced-annotation_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+
+---
+## Comparison of T cells
+
+* We will compare population using differential expression
+* This will generate a table with many important fields
+
+---
+
+## MAST test
+
+.center[
+&lt;img src="other_screen_shots/mast.png" width="50%"&gt;
+]
+
+---
+## Differential expression
+
+
+```r
+de_03_vs_11 &lt;- FindMarkers(
+  seurat, assay="SCT", ident.1 = 3, ident.2 = 11,
+  test="MAST", logfc.threshold = 0, min.pct = 0
+)
+write.table(de_03_vs_11, "de_03_vs_11.tsv", sep="\t", col.names=NA, quote=F)
+topGenes &lt;- head(rownames(de_03_vs_11))
+```
+
+---
+## Differential expression
+
+
+
+```r
+head(de_03_vs_11)
+```
+
+```
+##              p_val  avg_logFC pct.1 pct.2     p_val_adj
+## CCL5 1.115608e-113  3.0218880 0.992 0.048 1.787427e-109
+## NKG7 1.339048e-107  3.0873554 0.978 0.071 2.145422e-103
+## CST7  1.276064e-98  1.9549712 0.958 0.008  2.044509e-94
+## GZMA  1.080751e-82  2.0257942 0.914 0.032  1.731579e-78
+## RPS8  4.496728e-76 -0.6880436 1.000 1.000  7.204657e-72
+## RPS6  1.542867e-75 -0.6595797 1.000 1.000  2.471982e-71
+```
+
+.tiny[
+* avg_logFC - average log fold change
+* p_val - p value (bad)
+* p_val_adj - p value adjusted for multiple hypothesis (good)
+* pct.1 - % of cell in the first group (cluster 3) that have non-zero expression values of gene
+* pct.2 - % of cell in the first group (cluster 11) that have non-zero expression values of gene
+]
+
+
+---
+
+## Differential expression: visualized
+
+
+```r
+VlnPlot(seurat, topGenes, pt.size = 0.02, idents=c(3, 11), ncol=6)
+```
+
+![](advanced-annotation_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+
+---
+
+
+## Differential expression
+
+In single-cell RNA-seq we will compare cell groups against each other:
+* One cluster against the other (we just did it)
+* One cluster against all the other clusters (marker identification)
+(we did it in the first part)
+
+
+* One condition against the other (almost bulk RNA-seq)
+* Same cell type in different conditions
+
+---
+
+## Cd8 T cell investigation
+
+* We got two clusters, run DE and know whats different
+* What's next?
+
+---
+
+## Pathway enrichment
+
+By marker expression we know:
+* Cluster 3 is (activated ?) Cd8 T cells
+* Cluster 11 is (naïve/memory ?) Cd8 T cells
+
+Is there a pathway that drive these transcriptional changes?
+
+Is there a set of differentially expressed genes between these two groups?
+
+---
+
+## Let's save top genes
+
+
+```r
+de_03_vs_11$gene &lt;- rownames(de_03_vs_11)
+
+top50 &lt;- de_03_vs_11 %&gt;% top_n(50, avg_logFC) %&gt;% pull(gene)
+top200 &lt;- de_03_vs_11 %&gt;% top_n(200, avg_logFC) %&gt;% pull(gene)
+bottom50 &lt;- de_03_vs_11 %&gt;% top_n(50, -avg_logFC) %&gt;% pull(gene)
+bottom200 &lt;- de_03_vs_11 %&gt;% top_n(200, -avg_logFC) %&gt;% pull(gene)
+
+writeLines(top50, "top_50.txt")
+writeLines(top200, "top_200.txt")
+writeLines(bottom50, "bottom_50.txt")
+writeLines(bottom200, "bottom_200.txt")
+```
+
+---
+
+## msigdb
+
+* Lets open top50.txt
+* Lets search for the pathways
+* http://software.broadinstitute.org/gsea/msigdb/annotate.jsp
+
+---
+
+## msigdb
+
+* http://software.broadinstitute.org/gsea/msigdb/annotate.jsp
+
+
+.center[
+&lt;img src="other_screen_shots/msigdb1.png" width="50%"&gt;
+]
+
+---
+
+## msigdb results
+
+* http://software.broadinstitute.org/gsea/msigdb/annotate.jsp
+
+
+.center[
+&lt;img src="other_screen_shots/msigdb_results.png" width="70%"&gt;
+]
+
+
+---
+
+## GeneQuery
+
+* Lets open top 200 genes upregulated in activated T cells
+* Lets search for hits in GeneQuery
+* http://artyomovlab.wustl.edu/genequery/searcher/
+
+---
+
+## GeneQuery
+
+* http://artyomovlab.wustl.edu/genequery/searcher/
+
+.center[
+&lt;img src="other_screen_shots/gq1.png" width="60%"&gt;
+]
+
+---
+
+## GeneQuery
+
+* http://artyomovlab.wustl.edu/genequery/searcher/
+
+.center[
+&lt;img src="other_screen_shots/gq2.png" width="90%"&gt;
+]
+
+---
+
+## GeneQuery
+
+* http://artyomovlab.wustl.edu/genequery/searcher/
+
+.center[
+&lt;img src="other_screen_shots/gq3.png" width="50%"&gt;
+]
+
+---
+
+## GeneQuery
+
+* http://artyomovlab.wustl.edu/genequery/searcher/
+
+.center[
+&lt;img src="other_screen_shots/gq4.png" width="50%"&gt;
+]
+
+
+---
+
+## Pathway enrichment
+
+.center[
+&lt;img src="pw_enrichment.png" width="100%"&gt;
+]
+
+&lt;div class="my-footer"&gt;&lt;span&gt;Partially taken from: https://www.pnas.org/content/102/43/15545&lt;/span&gt;&lt;/div&gt; 
+
+---
+
+## FGSEA
+
+
+```r
+load("keggSymbolHuman.rdata")
+
+ranks &lt;- de_03_vs_11$avg_logFC
+names(ranks) &lt;- rownames(de_03_vs_11)
+fgseaRes &lt;- fgsea(pathways = keggSymbolHuman, 
+                  stats = ranks,
+                  minSize=15,
+                  maxSize=500,
+                  nperm=100000)
+```
+
+```
+## Warning in fgsea(pathways = keggSymbolHuman, stats = ranks, minSize = 15, : You
+## are trying to run fgseaSimple. It is recommended to use fgseaMultilevel. To run
+## fgseaMultilevel, you need to remove the nperm argument in the fgsea function
+## call.
+```
+
+```
+## Warning in preparePathwaysAndStats(pathways, stats, minSize, maxSize, gseaParam, : There are ties in the preranked stats (63.94% of the list).
+## The order of those tied genes will be arbitrary, which may produce unexpected results.
+```
+
+---
+## FGSEA
+
+
+```r
+head(fgseaRes)
+```
+
+```
+##                                                   pathway      pval      padj
+## 1:    Glycolysis / Gluconeogenesis - Homo sapiens (human) 0.2362735 0.4231303
+## 2:       Citrate cycle (TCA cycle) - Homo sapiens (human) 0.5767097 0.7123113
+## 3:       Pentose phosphate pathway - Homo sapiens (human) 0.3108722 0.4981228
+## 4: Fructose and mannose metabolism - Homo sapiens (human) 0.5910692 0.7197909
+## 5:            Galactose metabolism - Homo sapiens (human) 0.3624148 0.5642140
+## 6:           Fatty acid elongation - Homo sapiens (human) 0.8069547 0.8747035
+##            ES        NES nMoreExtreme size                          leadingEdge
+## 1:  0.5021257  1.1830853        15822   43   GAPDH,PGAM1,GALM,LDHA,ENO1,PKM,...
+## 2:  0.4206890  0.9168580        36379   26   IDH2,OGDH,SDHB,SDHA,MDH1,IDH3A,...
+## 3: -0.4649284 -1.1164831        11625   24    TKT,PGD,RPIA,ALDOC,PRPS1,FBP1,...
+## 4:  0.4090891  0.9068844        37763   29 PFKP,TPI1,TSTA3,GMPPB,PMM2,GMPPA,...
+## 5:  0.5092343  1.0886743        22601   23               GALM,B4GALT1,PFKP,GLB1
+## 6: -0.3196092 -0.7543024        30631   22       HADHA,PPT1,HSD17B12,TECR,HACD1
+```
+
+---
+
+## Using fgsea
+
+
+```r
+topPathwaysUp &lt;- fgseaRes[ES &gt; 0 &amp; padj &lt; 0.01, ][head(order(pval), n=10), pathway]
+topPathwaysDown &lt;- fgseaRes[ES &lt; 0 &amp; padj &lt; 0.01, ][head(order(pval), n=10), pathway]
+topPathways &lt;- c(topPathwaysUp, rev(topPathwaysDown))
+```
+
+
+---
+
+## Using fgsea
+
+
+```r
+plotGseaTable(keggSymbolHuman[topPathways], ranks, fgseaRes, 
+              gseaParam = 0.2, colwidths = c(5, 1, 0.8, 0.8, 0.8))
+```
+
+![](advanced-annotation_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+
+---
+
+## Using fgsea
+
+
+```r
+plotEnrichment(keggSymbolHuman[["T cell receptor signaling pathway - Homo sapiens (human)"]],
+ranks) + labs(title="T cell receptor signaling pathway - Homo sapiens (human)")
+```
+
+![](advanced-annotation_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+
+---
+
+## Summary
+
+* We have many ways to annotate gene sets, if it's hard to annotate by markers
+* Differential expression is one of key ways to do that
+* Once we have differential expression results we have many ways to annotate transcriptional differences with the pathways
+
+
+---
+
+## Questions?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
