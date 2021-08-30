@@ -1,0 +1,843 @@
+---
+title: "Introduction into single cell RNA-seq"
+author: "Konstantin Zaitsev"
+date: "December 3<sup>rd</sup>, 2020. Tomsk / Saint-Petersburg"
+output:
+  xaringan::moon_reader:
+    css: ["libs/itmo.css", "libs/itmo-fonts.css"]
+    nature:
+      ratio: "16:9"
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: center, middle
+
+# Single-cell RNA-seq (scRNA-seq)
+
+---
+
+## Cell is the fundamental unit
+
+* Microscopy
+* FACS (fluorescence activated cell sorting)/ CyTOF (Cytometry by Time Of Flight)
+* scRNA-seq (single-cell RNA-seq)
+* Single cell genomics and epigenetics
+
+---
+
+## Single cell RNA-seq
+
+.pull-left[
+* RNA-seq is a snapshot of what is happening in the sample
+* Sample consists of many different cells and cell types
+* Single-cell RNA-seq - thousand of individual snapshots of many cells to capture the whole picture
+]
+.pull-right[
+  .center[<img src="islets.png" width="60%">]
+]
+
+---
+
+## Why single-cell RNA-seq
+
+
+Heterogeneous populations:
+* New cell subpopulations discovery
+* Comparison of similar cell subpopulations
+* Marker selection for cell subpopulations
+
+Homogeneous populations:
+* Understanding heterogeneity
+* Cellular states and cellular processes
+
+Tracking of cell differentiation
+
+---
+
+## Smart-seq2
+
+.center[<img src="smartseq2.png" width="80%">]
+
+<div class="my-footer"><span>Paper: https://www.nature.com/articles/nprot.2014.006</span></div> 
+
+
+---
+
+## Single-cell RNA-seq of myeloid cells
+
+.pull-left[
+* Villani, Satija et al
+* Science, 2017
+* 1152 cells
+]
+
+.pull-right[
+.center[<img src="myeloid_fix.png" width="100%">]
+]
+
+
+<div class="my-footer"><span>Paper: https://science.sciencemag.org/content/356/6335/eaah4573</span></div> 
+
+---
+
+## Single-cell RNA-seq of myeloid cells
+
+.center[<img src="design_myeloid.png" width="100%">]
+
+
+<div class="my-footer"><span>Paper: https://science.sciencemag.org/content/356/6335/eaah4573</span></div> 
+
+
+---
+
+## Single-cell RNA-seq of melanoma
+
+.pull-left[
+* Tirosh, Izar et al
+* Science, 2016
+* 4645 cells
+]
+
+.pull-right[
+<img src="sc_cancer.png" width="110%">
+]
+
+<div class="my-footer"><span>Paper: https://science.sciencemag.org/content/352/6282/189.long</span></div> 
+
+---
+
+## Drop-seq: Cell, 2015
+
+.center[
+<img src="dropseq.png" width="60%">
+]
+
+<div class="my-footer"><span>Paper: https://www.cell.com/abstract/S0092-8674(15)00549-8</span></div> 
+
+---
+
+## 10x chromium machine: NComms, 2017
+
+.center[
+<img src="10x.png" width="65%">
+]
+
+<div class="my-footer"><span>Paper: https://www.nature.com/articles/ncomms14049</span></div> 
+
+---
+
+## Seq-Well: NMeth, 2017
+
+.pull-left[
+<img src="seqwell_head.png" width="100%">
+]
+
+.pull-right[
+<img src="seqwell_design.png" width="100%">
+]
+
+<div class="my-footer"><span>Paper: https://www.nature.com/articles/nmeth.4179</span></div> 
+
+---
+
+## Microwell-Seq: Cell, 2018
+
+.center[
+<img src="microwellseq.png" width="60%">
+]
+
+<div class="my-footer"><span>Paper: https://www.ncbi.nlm.nih.gov/pubmed/29474909</span></div> 
+
+---
+
+## Growth of single-cell technologies
+
+.center[
+<img src="cells.png" width="105%">
+]
+
+<div class="my-footer"><span>Human cell atlas white paper: https://arxiv.org/pdf/1810.05192.pdf</span></div> 
+
+---
+
+## Growth of single-cell technologies
+
+.center[
+<img src="papers.png" width="90%">
+]
+
+<div class="my-footer"><span>Based on pubmed results</span></div> 
+
+---
+
+## Main challenges
+
+* **How to amplify and sequence small number of RNA (typical mammalian cell has only 200 000 mRNA molecules)?**
+* How to isolate cells?
+* How to work with big number of cells?
+
+---
+
+
+## Low library complexity
+
+* Small numbers of mRNA molecules yield low complexity cDNA library
+* cDNA molecules to be amplified by PCR
+* We don’t want to sequence tons of PCR duplicates
+
+.center[
+<img src="pcr.png" width="80%">
+]
+
+---
+
+## Template-switching PCR
+
+.pull-left[
+* Switching Mechanism At the 5' end of RNA Template (SMART)
+* Robust for low input libraries
+]
+
+.pull-right[
+<img src="template_switch.png" width="90%">
+]
+
+---
+
+## Drop-seq schematics
+
+.center[
+<img src="scheme_1.png" width="95%">
+]
+
+<div class="my-footer"><span>Paper: https://www.cell.com/abstract/S0092-8674(15)00549-8</span></div>
+---
+
+## Drop-seq microfluidics
+
+.pull-left[
+<img src="microfluidics1.jpg" width="90%">
+]
+
+.pull-right[
+<img src="microfluidics2.jpg.png" width="110%">
+]
+
+<div class="my-footer"><span>Paper: https://www.cell.com/abstract/S0092-8674(15)00549-8</span></div>
+
+---
+
+## Drop-seq microfluidics
+
+.center[
+<img src="dropseq_gif.gif" width="100%">
+]
+
+---
+
+## Drop-seq schematics
+
+.center[
+<img src="scheme_2.png" width="95%">
+]
+
+<div class="my-footer"><span>Paper: https://www.cell.com/abstract/S0092-8674(15)00549-8</span></div>
+
+---
+
+## Barcoding
+
+.center[
+<img src="barcoded_beads-01.png" width="100%">
+]
+
+---
+
+## Barcoding
+
+.center[
+<img src="barcoded_beads-03.png" width="100%">
+]
+
+---
+
+## Barcoding
+
+.center[
+<img src="barcoded_beads-02.png" width="100%">
+]
+
+---
+
+## Barcoding
+
+.center[
+<img src="barcoded_beads-04.png" width="100%">
+]
+
+---
+
+## Drop-seq schematics
+
+.center[
+<img src="scheme_3.png" width="95%">
+]
+
+<div class="my-footer"><span>Paper: https://www.cell.com/abstract/S0092-8674(15)00549-8</span></div>
+
+---
+
+## Sequencing
+
+.center[
+<img src="umis1.png" width="100%">
+]
+---
+
+## Sequencing
+
+.center[
+<img src="umis2.png" width="100%">
+]
+---
+
+## Sequencing
+
+.center[
+<img src="umis3.png" width="100%">
+]
+---
+
+## Sequencing
+
+.center[
+<img src="umis4.png" width="100%">
+]
+---
+
+## Sequencing
+
+.center[
+<img src="umis5.png" width="100%">
+]
+---
+
+## Sequencing
+
+.center[
+<img src="umis6.png" width="100%">
+]
+---
+
+## Sequencing
+
+.center[
+<img src="umis7.png" width="100%">
+]
+---
+
+## Sequencing
+
+.center[
+<img src="umis8.png" width="100%">
+]
+
+---
+
+## All questions were addressed
+
+* Low input mRNA – template switching PCR
+* Cell isolation – microfluidics
+* Read identification – Cell barcodes
+* Dealing with PCR duplicates – Cell/UMI barcodes
+
+---
+
+## All questions were addressed
+
+* Low input mRNA – template switching PCR
+* **Cell isolation – microfluidics (might vary from technology to technology)**
+* **Barcoding with beads proved to be very effective**
+
+---
+
+## Dataset for today:
+
+* https://support.10xgenomics.com/single-cell-gene-expression/datasets/3.0.2/5k_pbmc_v3_nextgem
+
+.center[
+<img src="5k_v3.png" width="70%">
+]
+
+---
+
+## Let's have a loot at the summary
+
+* http://cf.10xgenomics.com/samples/cell-exp/3.0.2/5k_pbmc_v3_nextgem/5k_pbmc_v3_nextgem_web_summary.html
+
+---
+
+## Understaing what's noise
+
+.center[
+<img src="filtering_procedure.png" width="60%">
+]
+
+---
+
+## Understaing what's noise
+
+There is cell-free RNA in the cellular suspension that will be captured in empty droplets (with beads), and we must distinguish cells from empty droplets:
+
+* We can set a hard threshold on UMI to filter noise from actual cells
+* We can calculate noise signature and test every cell against this signature (emptyDrops, https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1662-y)
+
+---
+
+## Basic steps to analysis of scRNA-seq
+
+* Filtering out “bad” barcodes
+* Normalizing expression levels: (scaling and log2 normalizing)
+* PCA
+* Visualization (tSNE or UMAP)
+* Clustering
+* Cellular subset annotation
+
+---
+
+## Our setup
+
+* Address is the same https://ctlab.itmo.ru/rstudio-sbNN/
+* Folder scrna-seq
+
+.center[
+<img src="other_screen_shots/rstudio1.png" width="60%">
+]
+
+---
+
+## Our setup
+
+* Open the folder
+* Set this as a working directory
+* Open file scrna-seq-intro.R
+
+.center[
+<img src="other_screen_shots/rstudio2.png" width="60%">
+]
+
+---
+
+## Our setup
+
+* You will see chunks of code appearing on my slides
+* Follow along!
+* Select the code and press Ctrl + Enter to run the chunk
+
+---
+
+## Loading all the librarires 
+
+```{r message=F, warning=F}
+library(Seurat)
+library(Matrix)
+library(MAST)
+library(ggplot2)
+library(dplyr)
+```
+
+---
+
+## Loading the data 
+
+```{r }
+
+data <- Read10X("filtered_feature_bc_matrix/")
+dim(data)
+
+```
+
+Count matrix is large:
+
+* 33538 genes 
+* 11769 cells
+
+
+
+---
+
+## UMI distribution
+
+```{r fig.height=3, fig.fullwidth=T, dev='svg', message=F}
+
+plotData <- data.frame(
+  umis <- colSums(data)
+)
+ggplot(data=plotData, aes(x=umis)) +
+  geom_histogram() + theme_bw()
+
+```
+
+---
+
+## Filtering (genes and barcodes)
+
+```{r }
+
+seurat <- CreateSeuratObject(data, min.cells = 10, min.features = 10)
+dim(seurat)
+
+```
+
+17527 of 33538 genes were filtered (detected in $\leq 10$ cells)
+
+---
+
+## Filtering (genes and barcodes)
+
+```{r fig.height=3, fig.width=4.5, dev='png', message=F, fig.show='hold', dpi=100}
+
+FeatureScatter(seurat, "nCount_RNA", "nFeature_RNA") + scale_x_log10() + scale_y_log10()
+```
+
+---
+
+## Filtering (genes and barcodes)
+
+```{r fig.height=3, fig.width=4.5, dev='png', message=F, fig.show='hold', dpi=100}
+seurat[["percent.mt"]] <- PercentageFeatureSet(seurat, pattern = "^MT-")
+FeatureScatter(seurat, "nCount_RNA", "percent.mt") + scale_x_log10()
+FeatureScatter(seurat, "nFeature_RNA", "percent.mt") + scale_x_log10()
+```
+
+---
+
+## Filtering (genes and barcodes)
+
+```{r message=F, warning=F}
+seurat <- subset(seurat, subset = nFeature_RNA > 300 & percent.mt < 25)
+dim(seurat)
+```
+
+---
+
+## Normalization (old way)
+
+```{r }
+
+## seurat <- NormalizeData(seurat, normalization.method = "LogNormalize", scale.factor = 10000)
+## seurat <- FindVariableFeatures(seurat, selection.method = "vst", nfeatures = 2000)
+## seurat <- ScaleData(seurat)
+
+```
+
+* Scaling expression to 10 000 UMIs (instead of million in RPM)
+* Finding features with high variance (features above mean/variance trend)
+* Scaling data (for PCA and so on)
+
+---
+
+## Normalization (better way)
+
+```{r message=F, warning=F, cache=T}
+seurat <- SCTransform(seurat, vars.to.regress = "percent.mt", verbose = FALSE)
+
+```
+
+* SCTransform does all of these things in one command
+
+---
+
+## SCTransform: 
+
+.center[
+<img src="sctransform.png" width="80%">
+]
+
+<div class="my-footer"><span>Paper: https://www.biorxiv.org/content/biorxiv/early/2019/03/18/576827.full.pdf </span></div>
+
+---
+## Variable genes
+```{r fig.height=3, fig.width=6, dev='png', message=F, fig.show='hold', dpi=100}
+VariableFeaturePlot(seurat) + scale_y_log10()
+```
+
+---
+## Variable genes
+```{r fig.height=3, fig.width=6, dev='png', message=F, fig.show='hold', dpi=100}
+top10_variable_genes <- head(VariableFeatures(seurat), 10)
+VariableFeaturePlot(seurat) %>% 
+  LabelPoints(points = top10_variable_genes, repel = TRUE) +
+  scale_y_log10()
+```
+
+---
+
+## Basic steps to analysis of scRNA-seq
+
+* Filtering out “bad” barcodes
+* Normalizing expression levels: (scaling and log2 normalizing)
+* **PCA**
+* Visualization (tSNE or UMAP)
+* Clustering
+* Cellular subset annotation
+
+---
+## High-dimensionality of scRNA-seq
+
+Initially matrix is very large in size, this causes different kind of issues:
+
+* Some algorithms are just slow when performed in this high-dimensionality data
+* Curse of dimensionality
+
+We usually take several steps to reduce dims before creating 2d clustered map of our dataset
+
+* Keeping only variable genes (since those introduce variance to the dataset)
+* PCA will reduce dimensionality to 20-30 first components
+
+---
+
+## PCA
+
+```{r fig.height=3, fig.width=6, dev='svg', message=F, fig.show='hold'}
+seurat <- RunPCA(seurat, verbose = FALSE)
+ElbowPlot(seurat, ndims = 50)
+```
+
+---
+
+## Basic steps to analysis of scRNA-seq
+
+* Filtering out “bad” barcodes
+* Normalizing expression levels: (scaling and log2 normalizing)
+* PCA
+* **Visualization (tSNE or UMAP)**
+* Clustering
+* Cellular subset annotation
+
+---
+
+## Visualization
+
+Both tSNE and UMAP will put our data after PCA into a 2D plane:
+* Dots that are close to each other are cells that are transcriptionally similar to each other
+* Dots that are far from each other are cells that are trasncriptionally different from each other
+
+Lets look at dimensionality of each cell:
+* Variable genes only: 30k+ -> 2-3k of variable genes
+* PCA: 2-3k of variable genes -> 20-30 principal components
+* tSNE or UMAP: 20-30 PCs -> 2d or 3d plots
+
+---
+
+## tSNE
+
+```{r fig.height=3, fig.width=4.5, dev='png', message=F, warning=F, fig.show='hold', dpi=100}
+seurat <- RunTSNE(seurat, dims=1:20)
+DimPlot(seurat, reduction = "tsne") + NoLegend()
+```
+
+<div class="my-footer"><span>Paper: http://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf </span></div>
+
+---
+
+## tSNE
+
+tSNE - "t-Distributed Stochastic Neighbor Embedding (t-SNE) is a technique for dimensionality reduction that is particularly well suited for the visualization of high-dimensional datasets"
+
+* We can calculate distances in original space, and then calculate conditional probabilities $p_{i| j}$ that point $i$ would choose point $j$ as a neighbor. $p_{i| j}$  are proportional to "distances" from $i$ to all other points (actually probability density around point $i$, but it doesn't matter here).
+* Once all $p_{i, j}$ are calculated in original space we try to find such 2d/3d space that would have similar probabilities
+
+<div class="my-footer"><span>Paper: http://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf </span></div>
+
+---
+
+## UMAP
+
+```{r fig.height=3, fig.width=4, dev='png', message=F, warning=F, fig.show='hold', dpi=120}
+seurat <- RunUMAP(seurat, dims=1:20)
+DimPlot(seurat, reduction = "umap") + NoLegend()
+```
+
+<div class="my-footer"><span>Paper: https://arxiv.org/pdf/1802.03426.pdf </span></div>
+
+---
+
+## UMAP
+
+.center[
+<img src="umap.png" width="80%">
+]
+
+<div class="my-footer"><span>Paper: https://arxiv.org/pdf/1802.03426.pdf </span></div>
+
+---
+
+## UMAP
+
+https://pair-code.github.io/understanding-umap/
+
+---
+
+## Comparing two
+
+```{r fig.height=3, fig.width=3, dev='png', message=F, fig.show='hold', dpi=120}
+DimPlot(seurat, reduction = "tsne") + NoLegend()
+DimPlot(seurat, reduction = "umap") + NoLegend()
+```
+
+---
+
+## Basic steps to analysis of scRNA-seq
+
+* Filtering out “bad” barcodes
+* Normalizing expression levels: (scaling and log2 normalizing)
+* PCA
+* Visualization (tSNE or UMAP)
+* **Clustering**
+* Cellular subset annotation
+
+---
+
+## Clustering and annotation
+
+Clustering:
+* Graph-based clustering (preferred)
+* K-means 
+
+Annotation:
+* First, check known markers
+* For each cluster, perform differential expression: cluster against all others
+* Top DE genes expected to be highly distinctive marker genes
+
+---
+
+## Clustering
+
+.pull-left[
+* Instead of defining clusters based on distance we first find “shared nearest neighbors"
+* Cells that have a lot of neighbors in common, most likely “live in the same neighborhood”
+* Algorithm is trying to find such neighborhoods
+]
+
+.pull-right[
+  .center[<img src="snn-cliq.png" width="80%">]
+]
+
+<div class="my-footer"><span>Paper: https://academic.oup.com/bioinformatics/article/31/12/1974/214505 </span></div>
+
+---
+
+## Clustering
+
+```{r fig.height=2.6, fig.width=2.6, dev='png', message=F, warning=F, fig.show='hold', dpi=120}
+seurat <- FindNeighbors(seurat, dims = 1:20, verbose = FALSE)
+seurat <- FindClusters(seurat, resolution=0.6, verbose = FALSE)
+DimPlot(seurat, reduction = "tsne", label = TRUE) + NoLegend()
+DimPlot(seurat, reduction = "umap", label = TRUE) + NoLegend()
+```
+
+---
+## PBMC
+
+.center[<img src="pbmc.png" width="80%">]
+
+---
+
+## Annotation
+.small[
+Known markers: CD14, CD79A, CD3D are known markers of Monocytes, B cells and T cells respectively
+
+```{r fig.height=2.4, fig.width=8, dev='png', message=F, warning=F, fig.show='hold', dpi=120}
+FeaturePlot(seurat, c("CD14", "CD79A", "CD3D"), cols=c("grey", "red"), reduction="umap", ncol=3)
+```
+]
+
+
+---
+
+## Annotation
+
+We can run DE to identify markers automatically using MAST test
+
+```{r fig.height=2.4, fig.width=6, dev='png', message=F, warning=F, fig.show='hold', dpi=120, cache=T}
+# max cells per ident is only seed to speed up the whole thing
+allMarkers <- FindAllMarkers(seurat, max.cells.per.ident = 100, test.use = "MAST", only.pos = T)
+goodMarkers <- allMarkers %>% group_by(cluster) %>% top_n(n = 1, wt = avg_logFC) %>% pull(gene)
+goodMarkers
+```
+
+---
+
+## Ways to show expression
+.small[
+We usually either show expression **on top of reduction plot**, or show a violin plot for expression
+
+```{r fig.height=2.4, fig.width=8, dev='png', message=F, warning=F, fig.show='hold', dpi=120}
+FeaturePlot(seurat, goodMarkers[1:3], cols=c("grey", "red"), reduction="umap", ncol=3)
+```
+]
+---
+
+## Ways to show expression
+.small[
+We usually either show expression of top of reduction plot, or show a **violin plot** for expression
+
+```{r fig.height=2.4, fig.width=8, dev='png', message=F, warning=F, fig.show='hold', dpi=120}
+VlnPlot(seurat, goodMarkers[1:3], pt.size = 0.1)
+```
+]
+---
+## Save the Seurat object for later
+
+```{r fig.height=2.4, fig.width=8, dev='png', message=F, warning=F, fig.show='hold', dpi=120}
+saveRDS(seurat, file="blood_seurat.rds")
+```
+
+---
+## Communication is important
+
+* When clusters are found we want to identify which cell subsets are presented, to “annotate” them
+* If you are a bioinformatician and you are a single-cell RNA-seq dataset that have been designed/done by you, this is a perfect to time to go and talk to a biologist who performed/designed the experiment
+* If you are a biologist who designed/performed single-cell RNA-seq experiment, chances are, you know all cellular subsets and markers better than almost anyone else
+* This is where you communicate and try to make sense of the data
+
+---
+
+## Latest things: 5'
+
+* 5’ scRNA-seq is different from 3’ scRNA-seq
+* 5’ scRNA-seq allows us to get TCR and IG repertoires of the cell
+
+---
+
+## 3' sequencing
+
+.center[<img src="3prime.png" width="80%">]
+
+---
+
+## 5' sequencing
+
+.center[<img src="5prime.png" width="80%">]
+
+---
+
+## Surface protein expression
+
+.center[<img src="epitope1.png" width="50%">]
+.center[<img src="epitope2.png" width="50%">]
+
+---
+
+## Surface protein expression
+
+.center[<img src="epitopes.png" width="60%">]
+
+---
+
+## Questions?
+
+
