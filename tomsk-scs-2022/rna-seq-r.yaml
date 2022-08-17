@@ -1,0 +1,39 @@
+name: rna-seq-r
+channels:
+ - conda-forge
+ - bioconda
+ - anaconda
+dependencies:
+ - r-base=4.1.0
+ - r-curl
+ - r-xml
+ - r-openssl
+ - r-httr
+ - fit-sne=1.2.1
+ - r-remotes
+ - r-ggplot2
+ - r-flexmix
+ - r-biocmanager
+ - r-seurat
+ - r-jsonlite
+ - bioconductor-glmgampoi
+ - bioconductor-limma
+ - r-rmarkdown
+ - r-rprojroot
+ - r-caTools
+ - r-devtools
+ - bioconductor-fgsea
+ - r-ggrepel
+ - r-msigdbr
+ - r-pheatmap
+ - r-dplyr
+ - bioconductor-mast
+ - r-mass
+ - r-reshape2
+ - bioconductor-biobase
+ - bioconductor-pcatools
+ - bioconductor-sva
+ - r-rcolorbrewer
+ - bioconductor-apeglm
+ - bioconductor-vsn
+ - bioconductor-deseq2
