@@ -7,9 +7,8 @@ library(dplyr)
 
 
 ## checking dataset dimensions
-data <- Read10X("filtered_feature_bc_matrix/")
+data <- Read10X("/home/student/shared/filtered_feature_bc_matrix/")
 dim(data)
-
 
 
 ## looking at how UMIs are distributed
@@ -39,7 +38,7 @@ FeatureScatter(seurat, "nFeature_RNA", "percent.mt") + scale_x_log10()
 
 
 ## filtering bad cells
-seurat <- subset(seurat, subset = nFeature_RNA > 300 & percent.mt < 25)
+seurat <- subset(seurat, subset = nFeature_RNA > 1000 & percent.mt < 15)
 dim(seurat)
 
 
@@ -110,8 +109,3 @@ FeaturePlot(seurat, goodMarkers[1:3], cols=c("grey", "red"), reduction="umap", n
 
 ## showing gene expression as a violin plot
 VlnPlot(seurat, goodMarkers[1:3], pt.size = 0.1)
-
-
-## saving file for later
-saveRDS(seurat, file="blood_seurat.rds")
-
